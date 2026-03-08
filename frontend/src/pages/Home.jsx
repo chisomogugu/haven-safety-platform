@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Plus, Shield, AlertTriangle, CheckCircle, CheckCircle2, Circle, HelpCircle, Lightbulb, X, Loader2, ImagePlus, ArrowRight, ChevronRight } from 'lucide-react'
-import { getThreats, detectIntent, analyzeScam } from '../api'
+import { Plus, Shield, AlertTriangle, CheckCircle, CheckCircle2, Circle, HelpCircle, Lightbulb, Target, X, Loader2, ImagePlus, ArrowRight, ChevronRight } from 'lucide-react'
+import { getThreats, detectIntent, analyzeScam, getDailyCheckins } from '../api'
 import { readFileAsBase64, getVerdictStyle, getScoreColor } from '../utils/helpers'
 import FilterPills from '../components/FilterPills'
 import ThreatCard from '../components/ThreatCard'
@@ -77,7 +77,13 @@ function SmartSearch({ clientId, onSearchGuidance, onScamResult, onLoading }) {
         setText('')
         setImage(null)
       } else if (intent === 'score' || intent === 'score_check' || routeTo === 'score') {
-        navigate('/score')
+        onSearchGuidance?.({
+          answer: 'Your score now starts at 0 on each reload and is tracked directly on this page. Complete Daily Safety Scoreboard checklist steps below to increase it.',
+          actions: [],
+          follow_up: '',
+        }, query || 'my safety score')
+        setText('')
+        setImage(null)
       } else if (intent === 'digest' || routeTo === 'digest') {
         navigate('/digest')
       } else {
@@ -221,17 +227,29 @@ function ScamResult({ result, inputText, imagePreview, onDismiss }) {
 function SearchGuidanceResult({ result, query, onDismiss, onChecklistStepComplete }) {
   const answer = result?.answer || ''
 
-  const actions = (result?.actions || []).map((a, idx) => ({
-    id: `a${idx}`,
-    title: a.title || `Action ${idx + 1}`,
-    why: a.why || '',
-    steps: (a.steps || []).map(s => ({
-      step: s.step || '',
-      time: s.time || '',
-      points: Number(s.points || 0),
-    })),
-    total_points: Number(a.total_points || 0),
-  }))
+  const actions = Array.isArray(result?.recommended_actions) && result.recommended_actions.length
+    ? result.recommended_actions.map((a, idx) => ({
+      id: a.id || `a${idx}`,
+      title: a.title || `Action ${idx + 1}`,
+      why: a.why_this_matters || '',
+      steps: (a.protective_checklist || []).map(s => ({
+        step: s.step || '',
+        time: s.time_estimate || '',
+        points: Number(s.score_points || 0),
+      })),
+      total_points: Number(a.total_score_points || 0),
+    }))
+    : (result?.actions || []).map((a, idx) => ({
+      id: `a${idx}`,
+      title: a.title || `Action ${idx + 1}`,
+      why: a.why || '',
+      steps: (a.steps || []).map(s => ({
+        step: s.step || '',
+        time: s.time || '',
+        points: Number(s.points || 0),
+      })),
+      total_points: Number(a.total_points || 0),
+    }))
 
   const recommendedActions = actions  // alias for readability below
 
@@ -342,35 +360,145 @@ function SearchGuidanceResult({ result, query, onDismiss, onChecklistStepComplet
   )
 }
 
-// ─── Score Widget for Home ────────────────────────────────────────────────────
-function ScoreWidget({ score, onClick }) {
+// ─── Daily Safety Scoreboard ──────────────────────────────────────────────────
+function DailySafetyScoreboard({ cards, loading, completedSteps, onCompleteStep, dailyGoal, maxPoints }) {
+  const [openCardId, setOpenCardId] = useState(null)
+
+  useEffect(() => {
+    setOpenCardId(cards?.[0]?.id || null)
+  }, [cards])
+
+  const donePoints = (cards || []).reduce((sum, card) => {
+    const cardPoints = (card.steps || []).reduce((inner, _, idx) => (
+      completedSteps[`${card.id}:${idx}`]
+        ? inner + Number(card.steps[idx]?.score_points || 0)
+        : inner
+    ), 0)
+    return sum + cardPoints
+  }, 0)
+  const goal = Number(dailyGoal || 0)
+  const max = Number(maxPoints || 0)
+  const denominator = goal > 0 ? goal : (max > 0 ? max : 1)
+  const progressPct = Math.min(100, Math.round((donePoints / denominator) * 100))
+
+  if (loading) {
+    return (
+      <div className="bg-haven-card border border-haven-border rounded-2xl p-4">
+        <div className="flex justify-center py-6"><Spinner /></div>
+      </div>
+    )
+  }
+
+  if (!cards?.length) {
+    return (
+      <div className="bg-haven-card border border-haven-border rounded-2xl p-4">
+        <p className="text-sm text-haven-sub">No daily check-ins available right now.</p>
+      </div>
+    )
+  }
+
   return (
-    <button onClick={onClick}
-      className="w-full bg-haven-card border border-haven-border hover:border-haven-primary/40 rounded-2xl px-5 py-4 flex items-center gap-4 transition-all group">
-      <ScoreRing score={score?.score} size={64} label="" />
+    <div className="bg-haven-card border border-haven-border rounded-2xl p-4 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Target size={16} className="text-haven-primary" />
+          <div>
+            <p className="text-sm font-semibold text-haven-text">Daily Safety Scoreboard</p>
+            <p className="text-[11px] text-haven-dim">Resets on reload (MVP)</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-sm font-semibold text-haven-bright">{donePoints}/{goal || max} pts</p>
+          <p className="text-[11px] text-haven-dim">Today</p>
+        </div>
+      </div>
+
+      <div>
+        <div className="h-1.5 rounded-full bg-haven-muted/40 overflow-hidden">
+          <div className="h-full rounded-full bg-haven-primary transition-all duration-500" style={{ width: `${progressPct}%` }} />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        {cards.map((card) => {
+          const isOpen = openCardId === card.id
+          const doneCount = (card.steps || []).filter((_, idx) => completedSteps[`${card.id}:${idx}`]).length
+          const totalCount = (card.steps || []).length
+
+          return (
+            <div key={card.id} className="rounded-xl border border-haven-border bg-haven-surface/50">
+              <button
+                onClick={() => setOpenCardId(isOpen ? null : card.id)}
+                className="w-full px-3 py-2 text-left flex items-start justify-between gap-3"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm text-haven-text font-medium">{card.title}</p>
+                  <p className="text-[11px] text-haven-dim mt-0.5">
+                    {[card.category?.replace('_', ' '), card.time_estimate, `${card.points || 0} pts`].filter(Boolean).join(' · ')}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-haven-dim">
+                  <span>{doneCount}/{totalCount}</span>
+                  {isOpen ? <ChevronRight size={14} className="rotate-90 transition-transform" /> : <ChevronRight size={14} />}
+                </div>
+              </button>
+
+              {isOpen && (
+                <div className="px-3 pb-3 border-t border-haven-border/60 space-y-1.5">
+                  {card.description && <p className="text-xs text-haven-sub pt-2">{card.description}</p>}
+                  {(card.steps || []).map((step, idx) => {
+                    const key = `${card.id}:${idx}`
+                    const done = Boolean(completedSteps[key])
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => onCompleteStep(card.id, idx, Number(step.score_points || 0))}
+                        disabled={done}
+                        className={`w-full flex items-start gap-2.5 px-2 py-2 rounded-lg text-left transition-all ${
+                          done ? 'opacity-60 bg-green-500/5' : 'hover:bg-haven-card'
+                        }`}
+                      >
+                        <span className="pt-0.5">
+                          {done ? <CheckCircle2 size={15} className="text-green-400" /> : <Circle size={15} className="text-haven-muted" />}
+                        </span>
+                        <span className="flex-1">
+                          <span className={`text-sm ${done ? 'line-through text-haven-dim' : 'text-haven-text'}`}>{step.step}</span>
+                          <span className="block text-[11px] text-haven-dim mt-0.5">
+                            {[step.time_estimate, step.tooltip, `${step.score_points || 0} pts`].filter(Boolean).join(' · ')}
+                          </span>
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ─── Score Widget for Home ────────────────────────────────────────────────────
+function ScoreWidget({ score }) {
+  return (
+    <div className="w-full bg-haven-card border border-haven-border rounded-2xl px-5 py-4 flex items-center gap-4">
+      <ScoreRing score={score?.score ?? 0} size={64} label="" />
       <div className="flex-1 text-left">
         <p className="text-xs text-haven-dim uppercase tracking-wider mb-1">Safety Score</p>
-        {score ? (
-          <>
-            <p className={`text-2xl font-bold ${getScoreColor(score.score)}`}>{score.score}<span className="text-haven-dim text-sm font-normal">/100</span></p>
-            <p className="text-xs text-haven-sub mt-0.5">{score.rating || 'View details'}</p>
-          </>
-        ) : (
-          <>
-            <p className="text-haven-sub text-sm font-medium">Not calculated yet</p>
-            <p className="text-xs text-haven-dim mt-0.5">Take the 6-question quiz</p>
-          </>
-        )}
+        <p className={`text-2xl font-bold ${getScoreColor(score?.score ?? 0)}`}>
+          {score?.score ?? 0}<span className="text-haven-dim text-sm font-normal">/100</span>
+        </p>
+        <p className="text-xs text-haven-sub mt-0.5">Grows from checklist completion on this page</p>
       </div>
-      <ChevronRight size={16} className="text-haven-dim group-hover:text-haven-bright group-hover:translate-x-0.5 transition-all" />
-    </button>
+    </div>
   )
 }
 
 // ─── Main Home Page ───────────────────────────────────────────────────────────
 export default function Home({ clientId, profile, score, onScoreUpdate }) {
   const toast = useToast()
-  const navigate = useNavigate()
 
   const [threats, setThreats]     = useState([])
   const [loading, setLoading]     = useState(true)
@@ -382,6 +510,11 @@ export default function Home({ clientId, profile, score, onScoreUpdate }) {
   const [scamResult, setScamResult] = useState(null)
   const [searchGuidance, setSearchGuidance] = useState(null)
   const [liveScore, setLiveScore] = useState(score || null)
+  const [dailyCards, setDailyCards] = useState([])
+  const [dailyLoading, setDailyLoading] = useState(true)
+  const [dailyGoal, setDailyGoal] = useState(0)
+  const [dailyMaxPoints, setDailyMaxPoints] = useState(0)
+  const [dailyCompletedSteps, setDailyCompletedSteps] = useState({})
 
   useEffect(() => {
     setLiveScore(score || null)
@@ -406,6 +539,37 @@ export default function Home({ clientId, profile, score, onScoreUpdate }) {
 
     toast(`Score improved by +${gain}`, 'success')
   }, [onScoreUpdate, toast])
+
+  const loadDailyCheckins = useCallback(async () => {
+    setDailyLoading(true)
+    try {
+      const res = await getDailyCheckins(clientId, 4)
+      setDailyCards(res.cards || [])
+      setDailyGoal(Number(res.daily_goal || 0))
+      setDailyMaxPoints(Number(res.max_points || 0))
+      setDailyCompletedSteps({})
+    } catch {
+      toast('Failed to load daily check-ins', 'error')
+      setDailyCards([])
+      setDailyGoal(0)
+      setDailyMaxPoints(0)
+    } finally {
+      setDailyLoading(false)
+    }
+  }, [clientId, toast])
+
+  const completeDailyStep = useCallback((cardId, stepIndex, points) => {
+    const key = `${cardId}:${stepIndex}`
+    let newlyCompleted = false
+    setDailyCompletedSteps((prev) => {
+      if (prev[key]) return prev
+      newlyCompleted = true
+      return { ...prev, [key]: true }
+    })
+    if (newlyCompleted) {
+      applyChecklistScore(points)
+    }
+  }, [applyChecklistScore])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -435,6 +599,7 @@ export default function Home({ clientId, profile, score, onScoreUpdate }) {
   }, [clientId, profile?.location, sevFilter, typeFilter])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => { loadDailyCheckins() }, [loadDailyCheckins])
 
   return (
     <div className="space-y-5">
@@ -488,7 +653,16 @@ export default function Home({ clientId, profile, score, onScoreUpdate }) {
       </div>
 
       {/* Score widget */}
-      <ScoreWidget score={liveScore} onClick={() => navigate('/score')} />
+      <ScoreWidget score={liveScore} />
+
+      <DailySafetyScoreboard
+        cards={dailyCards}
+        loading={dailyLoading}
+        completedSteps={dailyCompletedSteps}
+        onCompleteStep={completeDailyStep}
+        dailyGoal={dailyGoal}
+        maxPoints={dailyMaxPoints}
+      />
 
       {profile?.location && (
         <p className="text-xs text-haven-dim">
@@ -510,7 +684,18 @@ export default function Home({ clientId, profile, score, onScoreUpdate }) {
       )}
 
       {selected && (
-        <ThreatDetail threat={selected} clientId={clientId} onClose={() => setSelected(null)} onToast={toast} />
+        <ThreatDetail
+          threat={selected}
+          clientId={clientId}
+          onClose={() => setSelected(null)}
+          onToast={toast}
+          onScoreUpdate={(s) => {
+            if (s?.score != null) {
+              setLiveScore(prev => ({ ...(prev || {}), score: s.score, total: s.score }))
+              onScoreUpdate?.({ ...(liveScore || {}), score: s.score, total: s.score })
+            }
+          }}
+        />
       )}
       {reporting && (
         <ReportThreatModal

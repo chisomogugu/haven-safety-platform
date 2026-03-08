@@ -5,7 +5,7 @@ import Spinner from './ui/Spinner'
 import EmptyState from './ui/EmptyState'
 import { Shield } from 'lucide-react'
 
-export default function ActionChecklist({ threat, clientId, onToast }) {
+export default function ActionChecklist({ threat, clientId, onToast, onScoreUpdate }) {
   const [actions, setActions]   = useState(null)
   const [loading, setLoading]   = useState(false)
   const [open, setOpen]         = useState(false)
@@ -30,13 +30,16 @@ export default function ActionChecklist({ threat, clientId, onToast }) {
     }
   }
 
-  const toggle = async (idx, step, done) => {
+  const toggle = async (idx, step, done, points) => {
     if (done) return  // already done
     setCompleting(idx)
     try {
-      await completeAction(threat.id, clientId, idx, step)
+      const res = await completeAction(threat.id, clientId, idx, step, points || 3)
       setActions(prev => prev.map((a, i) => i === idx ? { ...a, completed: true } : a))
-      onToast?.('Action marked complete!', 'success')
+      if (res.new_score != null) {
+        onScoreUpdate?.({ score: res.new_score })
+      }
+      onToast?.(`Step complete! +${points || 3} pts`, 'success')
     } catch {
       onToast?.('Failed to save progress', 'error')
     } finally {
@@ -92,7 +95,7 @@ export default function ActionChecklist({ threat, clientId, onToast }) {
               return (
                 <button
                   key={idx}
-                  onClick={() => toggle(idx, action.step || action, done)}
+                  onClick={() => toggle(idx, action.step || action, done, action.points)}
                   disabled={done || busy}
                   className={`w-full flex items-start gap-3 text-left p-3 rounded-lg transition-all ${
                     done
@@ -110,11 +113,13 @@ export default function ActionChecklist({ threat, clientId, onToast }) {
                   </span>
                   <span className={`text-sm leading-relaxed ${done ? 'line-through text-haven-dim' : 'text-haven-sub'}`}>
                     <span>{action.step || action}</span>
-                    {(action.time_estimate || action.tooltip) && (
+                    {(action.time_estimate || action.tooltip || action.points) && (
                       <span className="block mt-1 text-[11px] text-haven-dim">
-                        {action.time_estimate ? `${action.time_estimate}` : ''}
-                        {action.time_estimate && action.tooltip ? ' · ' : ''}
-                        {action.tooltip || ''}
+                        {[
+                          action.time_estimate,
+                          action.tooltip,
+                          action.points ? `+${action.points} pts` : null,
+                        ].filter(Boolean).join(' · ')}
                       </span>
                     )}
                   </span>

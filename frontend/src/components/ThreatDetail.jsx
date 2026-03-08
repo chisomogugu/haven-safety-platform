@@ -3,7 +3,7 @@ import { X, MapPin, Clock, ExternalLink, AlertTriangle } from 'lucide-react'
 import { formatDate, getSeverityColor, getSeverityBg, getCategoryLabel, getCategoryIcon } from '../utils/helpers'
 import ActionChecklist from './ActionChecklist'
 
-export default function ThreatDetail({ threat, clientId, onClose, onToast }) {
+export default function ThreatDetail({ threat, clientId, onClose, onToast, onScoreUpdate }) {
   // Close on Escape
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose() }
@@ -107,7 +107,7 @@ export default function ThreatDetail({ threat, clientId, onClose, onToast }) {
           )}
 
           {/* Action Checklist */}
-          <ActionChecklist threat={threat} clientId={clientId} onToast={onToast} />
+          <ActionChecklist threat={threat} clientId={clientId} onToast={onToast} onScoreUpdate={onScoreUpdate} />
 
           {/* Source link */}
           {threat.source_url && (

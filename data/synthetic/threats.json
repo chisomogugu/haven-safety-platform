@@ -90,7 +90,7 @@
     "type": "crime_alert",
     "severity": "low",
     "status": "monitoring",
-    "location": "Nashville, TN, USA",
+    "location": "Chicago, IL, USA",
     "reported_by": "Neighborhood Watch",
     "created_at": "2026-03-01T09:00:00+00:00",
     "updated_at": "2026-03-06T09:00:00+00:00"
@@ -138,7 +138,7 @@
     "type": "physical_hazard",
     "severity": "medium",
     "status": "monitoring",
-    "location": "Boston, MA, USA",
+    "location": "Chicago, IL, USA",
     "reported_by": "Boston DOT",
     "created_at": "2026-03-06T06:00:00+00:00",
     "updated_at": "2026-03-06T06:00:00+00:00"
@@ -214,5 +214,29 @@
     "reported_by": "Sacramento Unified School District",
     "created_at": "2026-03-06T07:45:00+00:00",
     "updated_at": "2026-03-06T07:45:00+00:00"
+  },
+  {
+    "id": "inc-019",
+    "title": "SMS Smishing Campaign Targeting Chicago Residents",
+    "description": "Chicago residents are receiving text messages impersonating the Illinois Tollway claiming an unpaid toll balance of $3.45. The link leads to a credential-harvesting site. Do not click the link. The Illinois Tollway does not request payment via SMS. Report the message to the FTC at reportfraud.ftc.gov.",
+    "type": "digital_scam",
+    "severity": "high",
+    "status": "active",
+    "location": "Chicago, IL, USA",
+    "reported_by": "Illinois Attorney General Office",
+    "created_at": "2026-03-07T09:00:00+00:00",
+    "updated_at": "2026-03-07T09:00:00+00:00"
+  },
+  {
+    "id": "inc-020",
+    "title": "Sinkhole Opens on South Michigan Avenue",
+    "description": "A sinkhole approximately 8 feet wide has opened on South Michigan Avenue near the intersection with 18th Street following heavy rainfall. The block is closed to vehicle and pedestrian traffic. City engineers are on site assessing the damage. Expect significant traffic rerouting in the South Loop area. Use alternate routes.",
+    "type": "physical_hazard",
+    "severity": "high",
+    "status": "monitoring",
+    "location": "Chicago, IL, USA",
+    "reported_by": "Chicago CDOT",
+    "created_at": "2026-03-07T14:30:00+00:00",
+    "updated_at": "2026-03-07T16:00:00+00:00"
   }
 ]

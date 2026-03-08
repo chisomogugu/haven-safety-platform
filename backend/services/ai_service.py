@@ -596,7 +596,7 @@ def detect_intent(text: str = None, image_b64: str = None, client_id: str = None
 def generate_actions(threat: dict, client_id: str = None) -> tuple[dict, bool]:
     """
     Generate a personalized action plan for a threat.
-    Agent fetches user profile and completed actions to personalize and skip done steps.
+    Pre-fetches all context in Python, then makes a single direct API call (no agent loop).
 
     Returns:
         (result, is_ai_generated)
@@ -607,31 +607,48 @@ def generate_actions(threat: dict, client_id: str = None) -> tuple[dict, bool]:
         return _get_template(threat["type"]), False
 
     try:
-        content = [{
-            "type": "input_text",
-            "text": (
-                f"Generate a personalized action plan for this safety threat:\n"
-                f"Title: {threat['title']}\n"
-                f"Type: {threat['type']}\n"
-                f"Severity: {threat['severity']}\n"
-                f"Location: {threat['location']}\n"
-                f"Description: {threat['description']}\n\n"
-                + (f"User client_id: {client_id}\n" if client_id else "")
-                + "Steps:\n"
-                + (f"1. Call get_user_profile('{client_id}') to understand this user.\n" if client_id else "")
-                + (f"2. Call get_completed_actions('{client_id}', '{threat['id']}') to see what they've already done.\n" if client_id else "")
-                + "3. Generate a calm, personalized action plan. Skip any steps they have already completed.\n"
-                "   Adjust language complexity to their tech literacy level.\n\n"
-                "Return ONLY this JSON:\n"
-                '{"why_this_matters": "2-3 calm sentences explaining relevance and what they can do", '
-                '"actions": [{"step": "...", "time_estimate": "X min", "tooltip": "..."}]}\n'
-                "3 to 5 actions, ordered by priority. Calm, empowering tone. Each step immediately actionable."
-            ),
-        }]
+        # Pre-fetch all context in Python — no tool calls in the API call
+        profile = {}
+        completed = {}
+        if client_id:
+            profile = _tool_get_user_profile(client_id)
+            completed = _tool_get_completed_actions(client_id, threat.get("id"))
 
-        tools = [t for t in TOOLS if t["name"] in ("get_user_profile", "get_completed_actions")]
-        result_text = _run_agent(SYSTEM_PERSONA, content, tools)
-        result = _extract_json(result_text)
+        context_parts = [
+            f"Threat: {threat['title']}",
+            f"Type: {threat['type']} | Severity: {threat['severity']} | Location: {threat['location']}",
+            f"Description: {threat['description']}",
+        ]
+        if profile and not profile.get("error"):
+            context_parts.append(f"User profile: {profile}")
+        if completed.get("completed_actions"):
+            already_done = [a["action_step"] for a in completed["completed_actions"]]
+            context_parts.append(f"Steps already completed (skip these): {already_done}")
+
+        context = "\n".join(context_parts)
+
+        instructions = (
+            f"{SYSTEM_PERSONA}\n\n"
+            "Generate a calm, personalized protective action plan for this threat. "
+            "3 to 5 steps, ordered by priority. Each step must be immediately actionable. "
+            "Adjust complexity to the user's tech literacy if known. "
+            "Assign points (3–5) per step based on impact.\n\n"
+            "Return ONLY this JSON:\n"
+            '{"why_this_matters":"2-3 calm sentences on relevance and what they can do",'
+            '"actions":[{"step":"actionable step","time_estimate":"X min","tooltip":"brief tip","points":4}]}'
+        )
+
+        client_ai = _get_client()
+        timeout = float(os.getenv("OPENAI_ACTIONS_TIMEOUT", "25"))
+        response = client_ai.responses.create(
+            model=_model(),
+            instructions=instructions,
+            input=[{"role": "user", "content": f"Generate protective actions.\n\nContext:\n{context}"}],
+            text={"format": {"type": "text"}},
+            timeout=timeout,
+        )
+
+        result = _extract_json(response.output_text)
 
         if not isinstance(result.get("actions"), list) or not result["actions"]:
             raise ValueError("AI returned empty or invalid actions list")
@@ -897,7 +914,7 @@ def generate_search_guidance(query: str = None, image_b64: str = None, client_id
 def generate_digest(client_id: str = None, location: str = None, interests: str = "both") -> tuple[dict, bool]:
     """
     Generate a personalized weekly safety digest.
-    Agent fetches user profile, local threats, and score summary for full context.
+    Pre-fetches all context in Python, then makes a single direct API call (no agent loop).
 
     Returns:
         (result, is_ai_generated)
@@ -908,39 +925,58 @@ def generate_digest(client_id: str = None, location: str = None, interests: str 
         return _get_template_digest_fallback(location or "your area"), False
 
     try:
-        context_parts = ["Generate a calm, personalized weekly safety digest for this user."]
+        # Pre-fetch all context in Python — no tool calls in the API call
+        profile = {}
+        score = {}
+        threats_data = {}
+
         if client_id:
-            context_parts.append(
-                f"User client_id: {client_id}\n"
-                f"1. Call get_user_profile('{client_id}') for demographics and location.\n"
-                f"2. Call get_score_summary('{client_id}') for their weakest security areas.\n"
-                "3. Call get_local_threats() using their location to find relevant active threats.\n"
-                "4. If they have weather or seasonal concerns, call get_local_threats() filtered by type='weather'.\n"
-                "5. Use all of this to create a digest that feels personally relevant."
-            )
-        elif location:
-            context_parts.append(
-                f"Location context: {location}\n"
-                f"Call get_local_threats(location='{location}', type=null, limit=10) "
-                "to find active threats in their area."
-            )
+            profile = _tool_get_user_profile(client_id)
+            score = _tool_get_score_summary(client_id)
+            user_location = profile.get("location") or location or ""
+        else:
+            user_location = location or ""
 
+        if user_location:
+            threats_data = _tool_get_local_threats(location=user_location, limit=10)
+        else:
+            threats_data = _tool_search_threats(limit=10)
+
+        # Build context string
+        context_parts = []
+        if profile and not profile.get("error"):
+            context_parts.append(f"User profile: {profile}")
+        if score and not score.get("error"):
+            context_parts.append(f"Security score summary: {score}")
+        if threats_data.get("threats"):
+            context_parts.append(f"Local threats ({len(threats_data['threats'])} found): {threats_data['threats'][:8]}")
         if interests != "both":
-            context_parts.append(f"User is interested in: {interests} threats only.")
+            context_parts.append(f"User interests: {interests} threats only.")
 
-        context_parts.append(
-            "\nReturn ONLY this JSON:\n"
-            '{"headline": "one calm informative headline", '
-            '"summary": "2-3 sentences on the safety landscape this week", '
-            '"top_priority": {"title": "most important thing to address", "action": "one specific actionable step"}, '
-            '"categories": {"digital": 0, "physical": 0, "resolved": 0}, '
-            '"positive_note": "one genuinely encouraging observation"}'
+        context = "\n".join(context_parts) if context_parts else "No specific user data available."
+
+        instructions = (
+            f"{SYSTEM_PERSONA}\n\n"
+            "Generate a calm, personalized weekly safety digest. Keep it brief and encouraging.\n\n"
+            "Return ONLY this JSON:\n"
+            '{"headline":"one calm informative headline",'
+            '"summary":"2-3 sentences on the safety landscape this week",'
+            '"top_priority":{"title":"most important thing to address","action":"one specific actionable step"},'
+            '"categories":{"digital":0,"physical":0,"resolved":0},'
+            '"positive_note":"one genuinely encouraging observation"}'
         )
 
-        user_input = [{"role": "user", "content": [{"type": "input_text", "text": "\n".join(context_parts)}]}]
-        tools = [t for t in TOOLS if t["name"] in ("get_user_profile", "get_local_threats", "get_score_summary")]
+        client_ai = _get_client()
+        timeout = float(os.getenv("OPENAI_DIGEST_TIMEOUT", "25"))
+        response = client_ai.responses.create(
+            model=_model(),
+            instructions=instructions,
+            input=[{"role": "user", "content": f"Generate my safety digest.\n\nContext:\n{context}"}],
+            text={"format": {"type": "text"}},
+            timeout=timeout,
+        )
 
-        result_text = _run_agent(SYSTEM_PERSONA, user_input, tools)
+        result_text = response.output_text
         result = _extract_json(result_text)
         result["generated_at"] = datetime.now(timezone.utc).isoformat()
         return result, True
@@ -1070,7 +1106,7 @@ def calculate_score(answers: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Fallback helpers — deterministic, always available
+# Fallback helpers 
 # ---------------------------------------------------------------------------
 
 def _get_scam_fallback() -> dict:

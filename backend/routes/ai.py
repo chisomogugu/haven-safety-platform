@@ -310,8 +310,9 @@ def get_score_recommendations(client_id):
 def complete_action(threat_id):
     """
     Mark a specific action step for a threat as completed by a user.
-    Body: { "client_id": "uuid", "action_index": 0, "action_step": "..." }
+    Body: { "client_id": "uuid", "action_index": 0, "action_step": "...", "points": 4 }
     Idempotent — completing the same step twice is not an error.
+    Awards points to the user's latest safety score.
     """
     data = request.get_json(silent=True)
     if data is None:
@@ -328,6 +329,8 @@ def complete_action(threat_id):
     action_step = (data.get('action_step') or '').strip()
     if not action_step:
         return jsonify({'error': 'action_step is required'}), 400
+
+    points = int(data.get('points') or 3)
 
     conn = get_db()
     try:
@@ -355,6 +358,8 @@ def complete_action(threat_id):
                 'client_id':    client_id,
                 'threat_id':    threat_id,
                 'action_index': action_index,
+                'score_delta':  0,
+                'new_score':    None,
             }), 200
 
         completion_id = str(uuid.uuid4())
@@ -364,6 +369,28 @@ def complete_action(threat_id):
                VALUES (?, ?, ?, ?, ?, ?)''',
             (completion_id, client_id, threat_id, action_index, action_step, now)
         )
+
+        # Award points to the user's latest safety score
+        new_score = None
+        cursor.execute(
+            'SELECT id, total FROM safety_scores WHERE client_id = ? ORDER BY calculated_at DESC LIMIT 1',
+            (client_id,)
+        )
+        score_row = cursor.fetchone()
+        if score_row:
+            new_total = min(100, score_row['total'] + points)
+            if new_total >= 80:
+                new_rating = 'good'
+            elif new_total >= 50:
+                new_rating = 'fair'
+            else:
+                new_rating = 'needs_attention'
+            cursor.execute(
+                'UPDATE safety_scores SET total = ?, rating = ? WHERE id = ?',
+                (new_total, new_rating, score_row['id'])
+            )
+            new_score = new_total
+
         conn.commit()
 
         return jsonify({
@@ -374,6 +401,8 @@ def complete_action(threat_id):
             'action_index': action_index,
             'action_step':  action_step,
             'completed_at': now,
+            'score_delta':  points,
+            'new_score':    new_score,
         }), 201
 
     finally:
