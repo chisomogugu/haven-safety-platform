@@ -1,20 +1,28 @@
-from flask import Flask, jsonify
+from flask import Flask
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 
+from database import init_db
+from routes.threats import threats_bp
+from routes.profile import profile_bp
+from routes.ai import ai_bp
+
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for React frontend
+CORS(app)
 
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Check if the Haven API is running and healthy."""
-    return jsonify({
-        'status': 'healthy',
-        'message': 'Haven API is running'
-    })
+# Register blueprints
+app.register_blueprint(threats_bp, url_prefix='/api')
+app.register_blueprint(profile_bp, url_prefix='/api')
+app.register_blueprint(ai_bp, url_prefix='/api')
+
+# Always init DB — runs whether started via `flask run` or `python app.py`
+with app.app_context():
+    init_db()
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

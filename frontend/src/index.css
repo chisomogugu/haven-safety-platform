@@ -1,3 +1,37 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: #12101f;
+  color: #ede9fe;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #13102a; }
+::-webkit-scrollbar-thumb { background: #3d3460; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #8b5cf6; }
+
+input[type="checkbox"] { accent-color: #8b5cf6; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
+*:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; border-radius: 4px; }
+
+.haven-glow-bg {
+  background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(139,92,246,0.12) 0%, transparent 70%);
+}
+
+.card-border {
+  border: 1px solid #2a2245;
+  transition: border-color 0.2s;
+}
+.card-border:hover { border-color: rgba(139,92,246,0.4); }
+
+.severity-bar-critical { background: #ef4444; }
+.severity-bar-high     { background: #f97316; }
+.severity-bar-medium   { background: #eab308; }
+.severity-bar-low      { background: #22c55e; }

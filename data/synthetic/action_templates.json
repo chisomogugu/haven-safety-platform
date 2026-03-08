@@ -1,0 +1,177 @@
+{
+  "digital_scam": {
+    "why_this_matters": "Scams and phishing attacks are engineered to look convincing — even careful people can be deceived. Acting within the first few minutes greatly limits any damage.",
+    "actions": [
+      {
+        "step": "Do not click any links, call back any numbers, or reply to the message",
+        "time_estimate": "Immediate",
+        "tooltip": "Even 'unsubscribe' links in scam emails can confirm your address is active"
+      },
+      {
+        "step": "Report the message as phishing to your email or messaging provider",
+        "time_estimate": "1 min",
+        "tooltip": "Gmail: three-dot menu → Report phishing. Outlook: right-click → Report. iMessage: Report Junk"
+      },
+      {
+        "step": "If you clicked a link or entered any information, change that account's password immediately",
+        "time_estimate": "5 min",
+        "tooltip": "Use a unique password you don't use anywhere else — a password manager makes this easy"
+      },
+      {
+        "step": "Enable two-factor authentication on any accounts you may have exposed",
+        "time_estimate": "5 min",
+        "tooltip": "Even if your password was stolen, 2FA prevents the attacker from logging in"
+      },
+      {
+        "step": "Monitor your financial accounts for any unauthorized charges over the next 30 days",
+        "time_estimate": "Ongoing",
+        "tooltip": "Most banks let you set up instant transaction alerts via SMS or email — this is worth enabling"
+      }
+    ]
+  },
+  "cyber_threat": {
+    "why_this_matters": "Data breaches and cyber threats can expose your personal information to bad actors. The good news: a few targeted steps now significantly reduce your exposure.",
+    "actions": [
+      {
+        "step": "Change your password for the affected service or platform",
+        "time_estimate": "3 min",
+        "tooltip": "Make it unique — don't reuse passwords across sites. A password manager like Bitwarden (free) makes this manageable"
+      },
+      {
+        "step": "Enable two-factor authentication on the affected account if not already active",
+        "time_estimate": "5 min",
+        "tooltip": "Use an authenticator app (Google Authenticator, Authy) rather than SMS for stronger protection"
+      },
+      {
+        "step": "Check if your email appears in any known breaches at haveibeenpwned.com",
+        "time_estimate": "2 min",
+        "tooltip": "This free service checks your email against hundreds of known data breaches"
+      },
+      {
+        "step": "Review recent account activity for any unfamiliar logins or changes",
+        "time_estimate": "5 min",
+        "tooltip": "Most services show login history under Security or Privacy settings"
+      },
+      {
+        "step": "If financial data may be involved, consider placing a free credit freeze at all three bureaus",
+        "time_estimate": "15 min",
+        "tooltip": "Equifax, Experian, and TransUnion all offer free credit freezes — this prevents new credit from being opened in your name"
+      }
+    ]
+  },
+  "physical_hazard": {
+    "why_this_matters": "Physical hazards can escalate quickly. Staying informed and taking a few precautionary steps keeps you and your household safe.",
+    "actions": [
+      {
+        "step": "Avoid the affected area until official all-clear is issued",
+        "time_estimate": "Immediate",
+        "tooltip": "Follow local emergency management social media accounts for the fastest updates"
+      },
+      {
+        "step": "Check on immediate neighbors, especially elderly or mobility-impaired residents",
+        "time_estimate": "5 min",
+        "tooltip": "A quick knock or call can make a meaningful difference for isolated individuals"
+      },
+      {
+        "step": "If evacuation guidance is issued, follow designated routes and bring emergency essentials",
+        "time_estimate": "15 min",
+        "tooltip": "Essentials: ID, medications, charger, water, a small amount of cash. Have a bag ready in advance"
+      },
+      {
+        "step": "Keep your phone charged and tune into local emergency broadcast (radio or TV)",
+        "time_estimate": "5 min",
+        "tooltip": "Download your city's official emergency alert app if available for push notifications"
+      },
+      {
+        "step": "Document any property damage with photos once it is safe to do so",
+        "time_estimate": "10 min",
+        "tooltip": "Timestamped photos are important for insurance claims and government assistance applications"
+      }
+    ]
+  },
+  "weather": {
+    "why_this_matters": "Severe weather events develop quickly. Preparing even 30 minutes ahead can mean the difference between staying safe and being caught off guard.",
+    "actions": [
+      {
+        "step": "Identify your safe shelter location now before the weather arrives",
+        "time_estimate": "5 min",
+        "tooltip": "For tornadoes: interior room, lowest floor, away from windows. For flooding: move to upper floors"
+      },
+      {
+        "step": "Charge all devices and have a battery-powered or hand-crank radio available",
+        "time_estimate": "10 min",
+        "tooltip": "Power outages are common in severe weather. A charged external battery bank is a good investment"
+      },
+      {
+        "step": "Secure or bring inside any outdoor furniture, trash cans, or loose items",
+        "time_estimate": "10 min",
+        "tooltip": "High winds can turn lightweight objects into projectiles that damage property"
+      },
+      {
+        "step": "Check on elderly neighbors or family members who may need assistance",
+        "time_estimate": "5 min",
+        "tooltip": "Offer to include them in your shelter plan or help them prepare their own supplies"
+      },
+      {
+        "step": "Review your local emergency management agency's guidance for this specific event type",
+        "time_estimate": "5 min",
+        "tooltip": "Search '[your city] emergency management' for official preparedness guidance"
+      }
+    ]
+  },
+  "crime_alert": {
+    "why_this_matters": "Being aware of local crime patterns helps you make informed decisions about your daily routine without unnecessary fear.",
+    "actions": [
+      {
+        "step": "Increase situational awareness in the identified area — vary your routes if possible",
+        "time_estimate": "Ongoing",
+        "tooltip": "Routine patterns can make you predictable. Small variations reduce risk without major inconvenience"
+      },
+      {
+        "step": "Ensure your home entry points are properly secured (locks, deadbolts, motion lights)",
+        "time_estimate": "10 min",
+        "tooltip": "Check that door frames are solid and locks engage fully. Most break-ins are opportunistic"
+      },
+      {
+        "step": "Avoid leaving valuables visible in your vehicle, especially in affected parking areas",
+        "time_estimate": "2 min",
+        "tooltip": "Move items to the trunk before arriving at your destination — doing it on-site signals what's inside"
+      },
+      {
+        "step": "Report any suspicious activity to local non-emergency police line (not 911 unless immediate danger)",
+        "time_estimate": "5 min",
+        "tooltip": "Community reporting helps police allocate patrols effectively — you don't need certainty to report"
+      },
+      {
+        "step": "Connect with your neighborhood watch or community safety group for shared awareness",
+        "time_estimate": "5 min",
+        "tooltip": "Nextdoor, community Facebook groups, or local police department community pages are good starting points"
+      }
+    ]
+  },
+  "generic": {
+    "why_this_matters": "Taking proactive steps when a safety concern is identified keeps you and your community better protected.",
+    "actions": [
+      {
+        "step": "Review your account security: change passwords for any potentially affected services",
+        "time_estimate": "5 min",
+        "tooltip": "Use unique passwords for each service — a password manager makes this practical"
+      },
+      {
+        "step": "Enable two-factor authentication on important accounts if not already active",
+        "time_estimate": "5 min",
+        "tooltip": "This single step prevents the vast majority of account takeover attempts"
+      },
+      {
+        "step": "Stay informed via official sources and avoid sharing unverified information",
+        "time_estimate": "Ongoing",
+        "tooltip": "Official city, county, or agency websites are the most reliable sources"
+      },
+      {
+        "step": "Report the incident to the relevant authority (police non-emergency, FTC, or local agency)",
+        "time_estimate": "10 min",
+        "tooltip": "FTC (reportfraud.ftc.gov) for scams, IC3 (ic3.gov) for cybercrime, local police for physical incidents"
+      }
+    ]
+  }
+}
