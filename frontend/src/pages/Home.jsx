@@ -86,6 +86,14 @@ function SmartSearch({ clientId, onSearchGuidance, onScamResult, onLoading }) {
         setImage(null)
       } else if (intent === 'digest' || routeTo === 'digest') {
         navigate('/digest')
+      } else if (intent === 'unknown') {
+        onSearchGuidance?.({
+          answer: "That doesn't look like a safety question. Try asking about threats in your area, checking a suspicious message, or reviewing your safety score.",
+          actions: [],
+          _unknown: true,
+        }, query || text)
+        setText('')
+        setImage(null)
       } else {
         // intent='search': render AI guidance inline from /api/intent.
         const guidance = intentRes.search_result || buildClientSearchFallback(query)
@@ -271,9 +279,9 @@ function SearchGuidanceResult({ result, query, onDismiss, onChecklistStepComplet
   return (
     <div className="rounded-2xl border border-haven-border overflow-hidden animate-fade-in">
       <div className="flex items-start gap-3 px-5 py-4 bg-haven-card">
-        <Lightbulb size={18} className="text-haven-bright mt-0.5" />
+        <Lightbulb size={18} className={result?._unknown ? "text-haven-dim mt-0.5" : "text-haven-bright mt-0.5"} />
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm text-haven-text">Safety Guidance</p>
+          <p className="font-semibold text-sm text-haven-text">{result?._unknown ? "Not a safety query" : "Safety Guidance"}</p>
           {query && <p className="text-xs text-haven-dim mt-0.5 truncate">"{query}"</p>}
         </div>
         <button onClick={onDismiss} className="text-haven-dim hover:text-haven-sub"><X size={14} /></button>
