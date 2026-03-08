@@ -10,6 +10,7 @@ from services.ai_service import (
     calculate_score,
     detect_intent,
     generate_digest,
+    generate_search_guidance,
     generate_score_recommendations,
 )
 
@@ -26,7 +27,7 @@ def intent():
     Detect what the user wants from unified search bar input.
     Accepts text, base64 image, or both.
     Body: { "text": "...", "image": "base64...", "image_type": "image/jpeg", "client_id": "uuid" }
-    Returns: { intent, query, context, route_to, is_ai_generated }
+    Returns: { intent, query, context, route_to, is_ai_generated, search_result? }
     """
     data = request.get_json(silent=True)
     if data is None:
@@ -49,6 +50,20 @@ def intent():
         image_b64=image_b64 or None,
         client_id=client_id,
     )
+
+    # Keep search in the same intent route, but answer it with AI guidance
+    # instead of treating it as a plain DB string match.
+    if result.get('intent') == 'search':
+        search_result, search_ai = generate_search_guidance(
+            query=(result.get('query') or text or None),
+            image_b64=image_b64 or None,
+            client_id=client_id,
+        )
+        search_result['is_ai_generated'] = search_ai
+        if not search_ai and search_result.get('ai_unavailable'):
+            search_result['source_note'] = 'Using standard safety guidance (AI temporarily unavailable)'
+        result['search_result'] = search_result
+
     result['is_ai_generated'] = is_ai
     return jsonify(result), 200
 

@@ -76,7 +76,8 @@ def _get_client() -> OpenAI:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise ValueError("OPENAI_API_KEY is not set")
-    return OpenAI(api_key=api_key)
+    max_retries = int(os.getenv("OPENAI_MAX_RETRIES", "0"))
+    return OpenAI(api_key=api_key, max_retries=max_retries)
 
 
 def _model() -> str:
@@ -110,6 +111,37 @@ def _build_image_content(image_b64: str, mime_type: str = "image/jpeg") -> dict:
         "image_url": f"data:{mime_type};base64,{image_b64}",
         "detail": "auto",
     }
+
+
+def _normalize_search_query(query: str) -> str:
+    if not query:
+        return ""
+    text = query.lower().strip()
+    # Remove common location phrases that are better handled by profile context.
+    for phrase in ("near me", "nearby", "in my area", "around me", "close to me"):
+        text = text.replace(phrase, " ")
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    tokens = [tok for tok in text.split() if tok not in {
+        "any", "what", "whats", "how", "do", "i", "my", "the", "a", "an",
+        "in", "at", "for", "to", "of", "is", "are", "on", "latest", "recent",
+        "trending", "alerts", "alert"
+    }]
+    return " ".join(tokens).strip()
+
+
+def _infer_type_from_query(query: str) -> str | None:
+    q = (query or "").lower()
+    if any(term in q for term in ("scam", "phishing", "fraud", "smishing", "vishing", "spoof")):
+        return "digital_scam"
+    if any(term in q for term in ("breach", "ransomware", "malware", "cyber", "hack", "credential", "wifi", "network")):
+        return "cyber_threat"
+    if any(term in q for term in ("weather", "storm", "flood", "tornado", "hurricane", "heat", "snow")):
+        return "weather"
+    if any(term in q for term in ("crime", "theft", "break in", "break-in", "robbery", "assault", "vandal")):
+        return "crime_alert"
+    if any(term in q for term in ("hazard", "gas leak", "power line", "water main", "structural", "evacuation")):
+        return "physical_hazard"
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -268,29 +300,48 @@ def _tool_get_user_profile(client_id: str) -> dict:
 def _tool_search_threats(query=None, location=None, type=None, severity=None, limit=None) -> dict:
     from database import get_db, VALID_TYPES, VALID_SEVERITIES
     limit = min(int(limit or 5), 20)
+    normalized_query = _normalize_search_query(query or "")
+    inferred_type = type if type in VALID_TYPES else _infer_type_from_query(query or "")
     conn = get_db()
     try:
         cursor = conn.cursor()
-        q = "SELECT id, title, type, severity, status, location, description FROM threats WHERE 1=1"
-        params = []
-        if query:
-            q += " AND (title LIKE ? OR description LIKE ? OR location LIKE ?)"
-            like = f"%{query}%"
-            params.extend([like, like, like])
-        if location:
-            q += " AND location LIKE ?"
-            params.append(f"%{location}%")
-        if type and type in VALID_TYPES:
-            q += " AND type = ?"
-            params.append(type)
-        if severity and severity in VALID_SEVERITIES:
-            q += " AND severity = ?"
-            params.append(severity)
-        q += " ORDER BY created_at DESC LIMIT ?"
-        params.append(limit)
-        cursor.execute(q, params)
-        threats = [dict(row) for row in cursor.fetchall()]
-        return {"threats": threats, "count": len(threats)}
+        base = "SELECT id, title, type, severity, status, location, description FROM threats WHERE 1=1"
+
+        def _run(include_query: bool) -> list[dict]:
+            q = base
+            params = []
+            if include_query and normalized_query:
+                q += " AND (title LIKE ? OR description LIKE ? OR location LIKE ?)"
+                like = f"%{normalized_query}%"
+                params.extend([like, like, like])
+            if location:
+                q += " AND location LIKE ?"
+                params.append(f"%{location}%")
+            if inferred_type:
+                q += " AND type = ?"
+                params.append(inferred_type)
+            if severity and severity in VALID_SEVERITIES:
+                q += " AND severity = ?"
+                params.append(severity)
+            q += (
+                " ORDER BY CASE severity "
+                "WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, created_at DESC LIMIT ?"
+            )
+            params.append(limit)
+            cursor.execute(q, params)
+            return [dict(row) for row in cursor.fetchall()]
+
+        threats = _run(include_query=True)
+        # If natural language query over-constrains results, retry with type/location only.
+        if not threats and normalized_query and inferred_type:
+            threats = _run(include_query=False)
+
+        return {
+            "threats": threats,
+            "count": len(threats),
+            "normalized_query": normalized_query,
+            "inferred_type": inferred_type,
+        }
     finally:
         conn.close()
 
@@ -395,6 +446,7 @@ def _run_agent(
     user_input: list,
     tools: list = None,
     timeout: float = 30.0,
+    max_tool_calls: int = MAX_TOOL_CALLS,
 ) -> str:
     """
     Run the Responses API agent loop.
@@ -439,9 +491,9 @@ def _run_agent(
         input_list += response.output
 
         for call in function_calls:
-            if tool_call_count >= MAX_TOOL_CALLS:
+            if tool_call_count >= max_tool_calls:
                 logger.warning(
-                    f"Max tool calls ({MAX_TOOL_CALLS}) reached — breaking agent loop early. "
+                    f"Max tool calls ({max_tool_calls}) reached — breaking agent loop early. "
                     f"Last attempted: {call.name}"
                 )
                 break
@@ -453,7 +505,7 @@ def _run_agent(
                 logger.error(f"Could not parse tool arguments for {call.name}: {e} — raw: {call.arguments!r}")
                 args = {}
 
-            logger.info(f"Tool call [{tool_call_count}/{MAX_TOOL_CALLS}]: {call.name}({args})")
+            logger.info(f"Tool call [{tool_call_count}/{max_tool_calls}]: {call.name}({args})")
             result = _execute_tool(call.name, args)
             preview = result[:300] + ("..." if len(result) > 300 else "")
             logger.info(f"Tool result: {call.name} → {preview}")
@@ -507,11 +559,29 @@ def detect_intent(text: str = None, image_b64: str = None, client_id: str = None
             '{"intent": "search|scam_check|digest|score|unknown", '
             '"query": "cleaned search query or empty string", '
             '"context": "one sentence explaining your reasoning", '
-            '"route_to": "threats|analyze|digest|score"}'
+            '"route_to": "threats|digest|score"}'
         )
 
-        result_text = _run_agent(instructions, user_input, tools)
+        intent_timeout = float(os.getenv("OPENAI_INTENT_TIMEOUT", "8"))
+        result_text = _run_agent(
+            instructions,
+            user_input,
+            tools,
+            timeout=intent_timeout,
+            max_tool_calls=2,
+        )
         result = _extract_json(result_text)
+
+        intent = (result.get("intent") or "").strip()
+        if intent in ("scam_check", "search", "unknown"):
+            result["route_to"] = "threats"
+        elif intent == "score":
+            result["route_to"] = "score"
+        elif intent == "digest":
+            result["route_to"] = "digest"
+        else:
+            result["route_to"] = "threats"
+
         return result, True
 
     except Exception as e:
@@ -667,6 +737,161 @@ def analyze_scam(text: str = None, image_b64: str = None, client_id: str = None)
             exc_info=True,
         )
         return _get_scam_fallback(), False
+
+
+def generate_search_guidance(query: str = None, image_b64: str = None, client_id: str = None) -> tuple[dict, bool]:
+    """
+    Generate AI guidance for unified-search queries classified as intent='search'.
+    Pre-fetches all DB data in Python first, then makes a single direct AI call (no tool loop).
+    This avoids multi-round-trip timeouts.
+    """
+    text = (query or "").strip()
+    if _force_fallback():
+        logger.info("generate_search_guidance — FORCE_FALLBACK active")
+        return _get_search_guidance_fallback(text), False
+
+    if not text and not image_b64:
+        return _get_search_guidance_fallback(""), False
+
+    truncated = False
+    if text and len(text) > 5000:
+        text = text[:5000]
+        truncated = True
+        logger.info("generate_search_guidance — input text truncated to 5000 chars")
+
+    try:
+        # Pre-fetch all context in Python — no tool calls needed
+        profile_ctx = ""
+        score_ctx = ""
+        threats_ctx = ""
+
+        if client_id:
+            try:
+                profile = _tool_get_user_profile(client_id)
+                if profile.get("found"):
+                    profile_ctx = (
+                        f"User profile: location={profile.get('location') or 'unknown'}, "
+                        f"tech_literacy={profile.get('tech_literacy') or 'intermediate'}, "
+                        f"services={profile.get('services') or []}."
+                    )
+            except Exception:
+                pass
+
+            try:
+                score = _tool_get_score_summary(client_id)
+                if score.get("found"):
+                    score_ctx = (
+                        f"Safety score: {score.get('total')}/100 ({score.get('rating')}). "
+                        f"Weakest areas: {score.get('weakest_areas') or []}."
+                    )
+            except Exception:
+                pass
+
+        if text:
+            try:
+                threats_data = _tool_search_threats(query=text, location=None, type=None, severity=None, limit=5)
+                threats_list = threats_data.get("threats", [])
+                if threats_list:
+                    threats_ctx = "Relevant threats in DB: " + "; ".join(
+                        f"{t['title']} ({t['severity']}, {t['location']})"
+                        for t in threats_list[:3]
+                    )
+            except Exception:
+                pass
+
+        context_parts = []
+        if profile_ctx:
+            context_parts.append(profile_ctx)
+        if score_ctx:
+            context_parts.append(score_ctx)
+        if threats_ctx:
+            context_parts.append(threats_ctx)
+
+        context_block = "\n".join(context_parts)
+
+        prompt_text = (
+            f"User question: {text}\n\n"
+            + (f"Context:\n{context_block}\n\n" if context_block else "")
+            + "Answer the question directly and calmly. Tailor language to the user's tech literacy if known."
+        )
+
+        content = []
+        if text or context_block:
+            content.append({"type": "input_text", "text": prompt_text})
+        if image_b64:
+            if not text:
+                content.append({"type": "input_text", "text": "Analyze this image for safety context, then provide practical next steps."})
+            content.append(_build_image_content(image_b64))
+        if truncated:
+            content.append({"type": "input_text", "text": "[Note: Input text was truncated to 5000 characters]"})
+
+        instructions = (
+            f"{SYSTEM_PERSONA}\n\n"
+            "Answer the user's safety question directly and calmly. "
+            "Provide 2-3 actions, each with 2-4 checkable steps. Keep it brief.\n\n"
+            "Return ONLY this JSON:\n"
+            '{"answer":"2-3 calm sentences",'
+            '"actions":[{"title":"action title","why":"1 sentence why it matters",'
+            '"steps":[{"step":"checkable step","time":"X min","points":3}]}]}'
+        )
+
+        # Single direct API call — no tools, no loop
+        client_ai = _get_client()
+        timeout = float(os.getenv("OPENAI_SEARCH_TIMEOUT", "25"))
+        response = client_ai.responses.create(
+            model=_model(),
+            instructions=instructions,
+            input=[{"role": "user", "content": content}],
+            text={"verbosity": "low"},
+            timeout=timeout,
+        )
+        result_text = response.output_text
+        result = _extract_json(result_text)
+
+        answer = (result.get("answer") or "").strip()
+        if not answer:
+            raise ValueError("AI response missing answer")
+
+        actions = []
+        for raw in (result.get("actions") or [])[:3]:
+            if not isinstance(raw, dict):
+                continue
+            title = (raw.get("title") or "").strip()
+            if not title:
+                continue
+            steps = []
+            for s in (raw.get("steps") or [])[:4]:
+                if not isinstance(s, dict) or not s.get("step"):
+                    continue
+                try:
+                    points = max(0, min(int(s.get("points", 0)), 25))
+                except Exception:
+                    points = 0
+                steps.append({
+                    "step": s["step"].strip(),
+                    "time": (s.get("time") or "").strip(),
+                    "points": points,
+                })
+            if steps:
+                actions.append({
+                    "title": title,
+                    "why": (raw.get("why") or "").strip(),
+                    "steps": steps,
+                    "total_points": sum(s["points"] for s in steps),
+                })
+
+        if not actions:
+            actions = _get_search_guidance_fallback(text).get("actions", [])
+
+        return {"answer": answer, "actions": actions, "text_truncated": truncated}, True
+
+    except Exception as e:
+        logger.error(
+            f"generate_search_guidance → fallback | query_len={len(text)} has_image={bool(image_b64)} "
+            f"client_id={client_id} | {type(e).__name__}: {e}",
+            exc_info=True,
+        )
+        return _get_search_guidance_fallback(text), False
 
 
 def generate_digest(client_id: str = None, location: str = None, interests: str = "both") -> tuple[dict, bool]:
@@ -865,6 +1090,55 @@ def _get_scam_fallback() -> dict:
         ]),
         "ai_unavailable": True,
     }
+
+
+def _get_search_guidance_fallback(query: str) -> dict:
+    q_lower = (query or "").lower()
+
+    if any(t in q_lower for t in ("home network", "wifi", "wi-fi", "router")):
+        answer = "Secure your home network by hardening your router first. Use WPA2/WPA3 encryption, a strong unique Wi-Fi password, and keep firmware updated."
+        actions = [
+            {"title": "Harden your router settings", "why": "Router defaults are the most common weak point in home security.",
+             "steps": [
+                 {"step": "Change the router admin password", "time": "3 min", "points": 4},
+                 {"step": "Set Wi-Fi security to WPA2 or WPA3", "time": "2 min", "points": 3},
+                 {"step": "Disable WPS", "time": "1 min", "points": 2},
+             ]},
+            {"title": "Reduce unauthorized device access", "why": "Unknown devices on your network increase account and privacy risk.",
+             "steps": [
+                 {"step": "Install router firmware updates", "time": "5 min", "points": 4},
+                 {"step": "Remove unknown connected devices", "time": "3 min", "points": 3},
+             ]},
+        ]
+    elif any(t in q_lower for t in ("data breach", "breach", "leak", "leaked")):
+        answer = "Act quickly to secure accounts tied to your email and phone. Prioritize password resets and account protections first."
+        actions = [
+            {"title": "Secure critical accounts", "why": "Email and banking are the highest-impact takeover targets after a breach.",
+             "steps": [
+                 {"step": "Change passwords for email and banking accounts", "time": "8 min", "points": 5},
+                 {"step": "Enable two-factor authentication", "time": "4 min", "points": 4},
+             ]},
+            {"title": "Check for signs of misuse", "why": "Early detection reduces fraud impact and speeds recovery.",
+             "steps": [
+                 {"step": "Review recent sign-ins and transactions", "time": "5 min", "points": 3},
+                 {"step": "Place a credit freeze if sensitive data was exposed", "time": "5 min", "points": 4},
+             ]},
+        ]
+    else:
+        answer = "Here is a practical safety plan based on your question. Start with the first step to reduce risk without overreacting."
+        actions = [
+            {"title": "Apply baseline protections", "why": "These defaults are safe and effective across most situations.",
+             "steps": [
+                 {"step": "Pause before clicking links or sharing sensitive info", "time": "1 min", "points": 2},
+                 {"step": "Verify requests through official channels", "time": "3 min", "points": 3},
+                 {"step": "Enable two-factor authentication on key accounts", "time": "5 min", "points": 4},
+             ]},
+        ]
+
+    for action in actions:
+        action["total_points"] = sum(s["points"] for s in action["steps"])
+
+    return {"answer": answer, "actions": actions, "ai_unavailable": True}
 
 
 def _get_template_digest_fallback(location: str) -> dict:

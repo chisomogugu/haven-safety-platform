@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Plus, Shield, AlertTriangle, CheckCircle, HelpCircle, X, Loader2, ImagePlus, ArrowRight, ChevronRight } from 'lucide-react'
+import { Plus, Shield, AlertTriangle, CheckCircle, CheckCircle2, Circle, HelpCircle, Lightbulb, X, Loader2, ImagePlus, ArrowRight, ChevronRight } from 'lucide-react'
 import { getThreats, detectIntent, analyzeScam } from '../api'
 import { readFileAsBase64, getVerdictStyle, getScoreColor } from '../utils/helpers'
 import FilterPills from '../components/FilterPills'
@@ -18,8 +18,34 @@ const VERDICT_ICON = {
   unclear:     <HelpCircle   size={18} className="text-verdict-unclear" />,
 }
 
+function buildClientSearchFallback(query) {
+  return {
+    answer: 'AI is temporarily unavailable. Here are practical next steps you can take right now.',
+    actions: [
+      {
+        title: 'Apply baseline protections',
+        why: 'These steps reduce immediate risk and improve your safety posture.',
+        steps: [
+          { step: 'Verify the request or alert through official channels', time: '3 min', points: 3 },
+          { step: 'Update passwords for key accounts and enable two-factor authentication', time: '6 min', points: 5 },
+          { step: 'Review recent account/device activity for anything unfamiliar', time: '4 min', points: 4 },
+        ],
+        total_points: 12,
+      },
+    ],
+    ai_unavailable: true,
+    source_note: 'Using standard safety guidance (AI temporarily unavailable)',
+  }
+}
+
+function deriveScoreRating(total) {
+  if (total >= 80) return 'good'
+  if (total >= 50) return 'fair'
+  return 'needs_attention'
+}
+
 // ─── Unified Smart Search Bar ─────────────────────────────────────────────────
-function SmartSearch({ clientId, onSearch, onScamResult, onLoading }) {
+function SmartSearch({ clientId, onSearchGuidance, onScamResult, onLoading }) {
   const [text, setText]       = useState('')
   const [image, setImage]     = useState(null)
   const [loading, setLoading] = useState(false)
@@ -55,12 +81,15 @@ function SmartSearch({ clientId, onSearch, onScamResult, onLoading }) {
       } else if (intent === 'digest' || routeTo === 'digest') {
         navigate('/digest')
       } else {
-        // Default: search threat feed from backend.
-        onSearch?.(query)
+        // intent='search': render AI guidance inline from /api/intent.
+        const guidance = intentRes.search_result || buildClientSearchFallback(query)
+        onSearchGuidance?.(guidance, query)
+        setText('')
+        setImage(null)
       }
     } catch {
-      // Fallback: treat as threat search
-      onSearch?.(text)
+      // Last-resort client fallback keeps search useful even if /intent fails.
+      onSearchGuidance?.(buildClientSearchFallback(text), text)
     } finally {
       setLoading(false)
       onLoading?.(false)
@@ -188,6 +217,131 @@ function ScamResult({ result, inputText, imagePreview, onDismiss }) {
   )
 }
 
+// ─── Inline Search Guidance Result ───────────────────────────────────────────
+function SearchGuidanceResult({ result, query, onDismiss, onChecklistStepComplete }) {
+  const answer = result?.answer || ''
+
+  const actions = (result?.actions || []).map((a, idx) => ({
+    id: `a${idx}`,
+    title: a.title || `Action ${idx + 1}`,
+    why: a.why || '',
+    steps: (a.steps || []).map(s => ({
+      step: s.step || '',
+      time: s.time || '',
+      points: Number(s.points || 0),
+    })),
+    total_points: Number(a.total_points || 0),
+  }))
+
+  const recommendedActions = actions  // alias for readability below
+
+  const [openActionId, setOpenActionId] = useState(null)
+  const [completedSteps, setCompletedSteps] = useState({})
+
+  useEffect(() => {
+    setOpenActionId(recommendedActions[0]?.id || null)
+    setCompletedSteps({})
+  }, [query, result])
+
+  const completeStep = (actionId, stepIndex, scorePoints) => {
+    const key = `${actionId}:${stepIndex}`
+    if (completedSteps[key]) return
+    setCompletedSteps(prev => ({ ...prev, [key]: true }))
+    onChecklistStepComplete?.(Number(scorePoints) || 0)
+  }
+
+  return (
+    <div className="rounded-2xl border border-haven-border overflow-hidden animate-fade-in">
+      <div className="flex items-start gap-3 px-5 py-4 bg-haven-card">
+        <Lightbulb size={18} className="text-haven-bright mt-0.5" />
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm text-haven-text">Safety Guidance</p>
+          {query && <p className="text-xs text-haven-dim mt-0.5 truncate">"{query}"</p>}
+        </div>
+        <button onClick={onDismiss} className="text-haven-dim hover:text-haven-sub"><X size={14} /></button>
+      </div>
+
+      <div className="px-5 py-4 bg-haven-surface space-y-3">
+        {result?.source_note && (
+          <p className="text-[11px] text-haven-dim bg-haven-card border border-haven-border rounded-lg px-2.5 py-2">
+            {result.source_note}
+          </p>
+        )}
+        {answer && <p className="text-sm text-haven-sub leading-relaxed">{answer}</p>}
+
+        {recommendedActions.length > 0 && (
+          <div className="bg-haven-card rounded-xl px-3 py-2">
+            <p className="text-xs uppercase tracking-wider text-haven-dim font-semibold mb-2">Recommended Actions</p>
+            <div className="space-y-2">
+              {recommendedActions.map((action) => {
+                const isOpen = openActionId === action.id
+                const doneCount = action.steps.filter((_, idx) => completedSteps[`${action.id}:${idx}`]).length
+                const total = action.steps.length
+
+                return (
+                  <div key={action.id} className="rounded-lg border border-haven-border bg-haven-surface/50">
+                    <button
+                      onClick={() => setOpenActionId(isOpen ? null : action.id)}
+                      className="w-full px-3 py-2 flex items-start justify-between gap-3 text-left"
+                    >
+                      <div>
+                        <p className="text-sm text-haven-text font-medium">{action.title}</p>
+                        <p className="text-xs text-haven-dim mt-0.5">
+                          {`${action.total_points} pts`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-haven-dim">
+                        <span>{doneCount}/{total}</span>
+                        {isOpen ? <ChevronRight size={14} className="rotate-90 transition-transform" /> : <ChevronRight size={14} />}
+                      </div>
+                    </button>
+
+                    {isOpen && (
+                      <div className="px-3 pb-3 space-y-2 border-t border-haven-border/60">
+                        {action.why && (
+                          <p className="text-xs text-haven-sub pt-2">{action.why}</p>
+                        )}
+                        {action.steps.map((step, idx) => {
+                          const key = `${action.id}:${idx}`
+                          const done = Boolean(completedSteps[key])
+                          return (
+                            <button
+                              key={key}
+                              onClick={() => completeStep(action.id, idx, step.points)}
+                              disabled={done}
+                              className={`w-full flex items-start gap-2.5 text-left rounded-lg px-2 py-2 transition-all ${
+                                done ? 'opacity-60 bg-green-500/5' : 'hover:bg-haven-card'
+                              }`}
+                            >
+                              <span className="pt-0.5">
+                                {done ? <CheckCircle2 size={15} className="text-green-400" /> : <Circle size={15} className="text-haven-muted" />}
+                              </span>
+                              <span className="flex-1">
+                                <span className={`text-sm ${done ? 'line-through text-haven-dim' : 'text-haven-text'}`}>{step.step}</span>
+                                <span className="block text-[11px] text-haven-dim mt-0.5">
+                                  {[step.time, `+${step.points} pts`].filter(Boolean).join(' · ')}
+                                </span>
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {result?.follow_up && (
+          <p className="text-xs text-haven-dim">{result.follow_up}</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Score Widget for Home ────────────────────────────────────────────────────
 function ScoreWidget({ score, onClick }) {
   return (
@@ -214,7 +368,7 @@ function ScoreWidget({ score, onClick }) {
 }
 
 // ─── Main Home Page ───────────────────────────────────────────────────────────
-export default function Home({ clientId, profile, score }) {
+export default function Home({ clientId, profile, score, onScoreUpdate }) {
   const toast = useToast()
   const navigate = useNavigate()
 
@@ -223,10 +377,35 @@ export default function Home({ clientId, profile, score }) {
   const [aiLoading, setAiLoading] = useState(false)
   const [typeFilter, setType]     = useState('')
   const [sevFilter, setSev]       = useState('')
-  const [searchText, setSearch]   = useState('')
   const [selected, setSelected]   = useState(null)
   const [reporting, setReporting] = useState(false)
   const [scamResult, setScamResult] = useState(null)
+  const [searchGuidance, setSearchGuidance] = useState(null)
+  const [liveScore, setLiveScore] = useState(score || null)
+
+  useEffect(() => {
+    setLiveScore(score || null)
+  }, [score])
+
+  const applyChecklistScore = useCallback((points) => {
+    const gain = Number(points || 0)
+    if (!gain || gain <= 0) return
+
+    setLiveScore((prev) => {
+      const current = Number(prev?.score ?? prev?.total ?? 0)
+      const updated = Math.min(100, current + gain)
+      const next = {
+        ...(prev || {}),
+        score: updated,
+        total: updated,
+        rating: deriveScoreRating(updated),
+      }
+      onScoreUpdate?.(next)
+      return next
+    })
+
+    toast(`Score improved by +${gain}`, 'success')
+  }, [onScoreUpdate, toast])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -235,11 +414,10 @@ export default function Home({ clientId, profile, score }) {
         client_id: clientId,
         type: typeFilter || undefined,
         severity: sevFilter || undefined,
-        search: searchText || undefined,
       }
 
       // Default feed is contextual to the user, not a global platform dump.
-      if (!searchText && profile?.location) {
+      if (profile?.location) {
         params.location = profile.location
       }
 
@@ -254,7 +432,7 @@ export default function Home({ clientId, profile, score }) {
     } finally {
       setLoading(false)
     }
-  }, [clientId, profile?.location, searchText, sevFilter, typeFilter])
+  }, [clientId, profile?.location, sevFilter, typeFilter])
 
   useEffect(() => { load() }, [load])
 
@@ -273,8 +451,8 @@ export default function Home({ clientId, profile, score }) {
       {/* Unified Smart Search */}
       <SmartSearch
         clientId={clientId}
-        onSearch={t => { setSearch((t || '').trim()); setScamResult(null) }}
-        onScamResult={(r, t, img) => { setScamResult({ result: r, text: t, image: img }); setSearch('') }}
+        onSearchGuidance={(result, query) => { setSearchGuidance({ result, query }); setScamResult(null) }}
+        onScamResult={(r, t, img) => { setScamResult({ result: r, text: t, image: img }); setSearchGuidance(null) }}
         onLoading={setAiLoading}
       />
 
@@ -285,6 +463,14 @@ export default function Home({ clientId, profile, score }) {
           inputText={scamResult.text}
           imagePreview={scamResult.image}
           onDismiss={() => setScamResult(null)}
+        />
+      )}
+      {searchGuidance && (
+        <SearchGuidanceResult
+          result={searchGuidance.result}
+          query={searchGuidance.query}
+          onChecklistStepComplete={applyChecklistScore}
+          onDismiss={() => setSearchGuidance(null)}
         />
       )}
 
@@ -302,16 +488,9 @@ export default function Home({ clientId, profile, score }) {
       </div>
 
       {/* Score widget */}
-      <ScoreWidget score={score} onClick={() => navigate('/score')} />
+      <ScoreWidget score={liveScore} onClick={() => navigate('/score')} />
 
-      {/* Search label */}
-      {searchText && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-haven-sub">Results for <span className="text-haven-bright font-medium">"{searchText}"</span></p>
-          <button onClick={() => setSearch('')} className="text-xs text-haven-dim hover:text-haven-sub">Clear</button>
-        </div>
-      )}
-      {!searchText && profile?.location && (
+      {profile?.location && (
         <p className="text-xs text-haven-dim">
           Showing threats near <span className="text-haven-sub">{profile.location}</span>
         </p>
@@ -321,8 +500,8 @@ export default function Home({ clientId, profile, score }) {
       {loading || aiLoading ? (
         <div className="flex justify-center py-12"><Spinner size="lg" /></div>
       ) : !threats.length ? (
-        <EmptyState icon={Shield} title={searchText ? 'No matching threats' : 'No threats reported'}
-          description={searchText ? 'Try a different search' : 'Your community looks safe right now.'} />
+        <EmptyState icon={Shield} title="No threats reported"
+          description="Your community looks safe right now." />
       ) : (
         <div className="space-y-2.5">
           {threats.map(t => <ThreatCard key={t.id} threat={t} onClick={setSelected} />)}
