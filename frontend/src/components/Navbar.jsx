@@ -1,11 +1,9 @@
 import { NavLink } from 'react-router-dom'
-import { Shield, Scan, BarChart3, BookOpen, Hexagon } from 'lucide-react'
+import { Shield, BookOpen, Hexagon } from 'lucide-react'
 import { getScoreColor } from '../utils/helpers'
 
 const links = [
   { to: '/',        label: 'Feed',    icon: Shield },
-  { to: '/analyze', label: 'Analyze', icon: Scan },
-  { to: '/score',   label: 'Score',   icon: BarChart3 },
   { to: '/digest',  label: 'Digest',  icon: BookOpen },
 ]
 

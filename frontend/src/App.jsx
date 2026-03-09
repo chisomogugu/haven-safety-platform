@@ -5,15 +5,12 @@ import ErrorBoundary from './components/ErrorBoundary'
 import Layout from './components/Layout'
 import OnboardingModal from './components/OnboardingModal'
 import Home from './pages/Home'
-import AnalyzePage from './pages/AnalyzePage'
-import ScorePage from './pages/ScorePage'
 import DigestPage from './pages/DigestPage'
 import useClient from './hooks/useClient'
-import { getScore } from './api'
 
 export default function App() {
   const { clientId, profile, setProfile, isOnboarded } = useClient()
-  const [score, setScore] = useState(null)
+  const [score, setScore] = useState({ score: 0, total: 0, rating: 'needs_attention' })
   const [showOnboarding, setShowOnboarding] = useState(false)
 
   // Show onboarding after a brief delay for new users
@@ -23,15 +20,6 @@ export default function App() {
       return () => clearTimeout(t)
     }
   }, [isOnboarded])
-
-  // Pre-load score if already onboarded
-  useEffect(() => {
-    if (isOnboarded && clientId) {
-      getScore(clientId).then(res => {
-        if (res.latest) setScore({ score: res.latest.total, ...res.latest })
-      }).catch(() => {})
-    }
-  }, [clientId, isOnboarded])
 
   const handleOnboardDone = (p) => {
     setProfile(p)
@@ -43,9 +31,7 @@ export default function App() {
       <ToastProvider>
         <Layout clientId={clientId} profile={profile} score={score}>
           <Routes>
-            <Route path="/"        element={<Home clientId={clientId} profile={profile} score={score} />} />
-            <Route path="/analyze" element={<AnalyzePage clientId={clientId} />} />
-            <Route path="/score"   element={<ScorePage clientId={clientId} profile={profile} onScoreUpdate={setScore} />} />
+            <Route path="/"        element={<Home clientId={clientId} profile={profile} score={score} onScoreUpdate={setScore} />} />
             <Route path="/digest"  element={<DigestPage clientId={clientId} profile={profile} />} />
           </Routes>
         </Layout>

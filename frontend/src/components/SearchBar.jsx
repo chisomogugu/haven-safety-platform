@@ -44,15 +44,15 @@ export default function SearchBar({ clientId, onIntent, placeholder = 'Search th
 
       // Route based on detected intent
       if (intent === 'scam_check') {
-        navigate('/analyze', { state: { prefill: text, image: image?.b64 } })
+        // Scam analysis is handled inline by the consuming screen.
       } else if (intent === 'score' || intent === 'score_check') {
-        navigate('/score')
+        if (onIntent) onIntent('score', text)
       } else if (intent === 'digest') {
         navigate('/digest')
       }
-      // else: 'threat_search' — parent handles filtering via onIntent callback
+      // else: 'search' — parent handles inline guidance via onIntent callback
     } catch {
-      if (onIntent) onIntent('threat_search', text)
+      if (onIntent) onIntent('search', text)
     } finally {
       setLoading(false)
     }
@@ -64,8 +64,8 @@ export default function SearchBar({ clientId, onIntent, placeholder = 'Search th
     <div
       className={`relative rounded-2xl border transition-all duration-200 ${
         dragOver
-          ? 'border-haven-primary bg-haven-primary/5 shadow-[0_0_0_3px_rgba(139,92,246,0.2)]'
-          : 'border-haven-border bg-haven-surface hover:border-haven-muted focus-within:border-haven-primary focus-within:shadow-[0_0_0_2px_rgba(139,92,246,0.15)]'
+          ? 'border-haven-primary bg-haven-primary/5 shadow-[0_0_0_3px_rgba(47,127,159,0.22)]'
+          : 'border-haven-border bg-haven-surface hover:border-haven-muted focus-within:border-haven-primary focus-within:shadow-[0_0_0_2px_rgba(47,127,159,0.18)]'
       }`}
       onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
       onDragLeave={() => setDragOver(false)}

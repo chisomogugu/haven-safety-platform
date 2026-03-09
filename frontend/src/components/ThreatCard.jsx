@@ -21,7 +21,7 @@ export default function ThreatCard({ threat, onClick }) {
   return (
     <button
       onClick={() => onClick(threat)}
-      className={`w-full text-left group bg-haven-card border ${ring} hover:border-haven-primary/40 rounded-xl p-4 transition-all duration-200 hover:shadow-[0_0_20px_rgba(139,92,246,0.08)] hover:-translate-y-0.5 animate-fade-in`}
+      className={`w-full text-left group bg-haven-card border ${ring} hover:border-haven-primary/40 rounded-xl p-4 transition-all duration-200 hover:shadow-[0_0_20px_rgba(47,127,159,0.16)] hover:-translate-y-0.5 animate-fade-in`}
     >
       <div className="flex items-start gap-3">
         {/* Category icon */}

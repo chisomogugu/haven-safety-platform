@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="980" viewBox="0 0 1440 980">
+  <rect width="1440" height="980" fill="#f4f7f9"/>
+  <rect x="40" y="24" width="1360" height="76" rx="14" fill="#ffffff" stroke="#d9e2e8"/>
+  <text x="72" y="70" font-family="Arial" font-size="28" font-weight="700" fill="#1d2a33">Haven</text>
+  <text x="1240" y="70" font-family="Arial" font-size="20" fill="#4a5f6d">Score 72</text>
+
+  <rect x="40" y="124" width="1360" height="74" rx="14" fill="#ffffff" stroke="#d9e2e8"/>
+  <text x="72" y="168" font-family="Arial" font-size="22" fill="#5f7380">Search threats, paste suspicious content, or upload image...</text>
+
+  <rect x="40" y="220" width="860" height="190" rx="16" fill="#eaf4ef" stroke="#b7d8c4"/>
+  <text x="68" y="266" font-family="Arial" font-size="18" font-weight="700" fill="#1f5c3f">Top Action Right Now</text>
+  <text x="68" y="304" font-family="Arial" font-size="28" font-weight="700" fill="#123c2a">Enable 2FA on your email account</text>
+  <text x="68" y="338" font-family="Arial" font-size="20" fill="#2f5f4a">Time: 3 min  •  Impact: +5 points</text>
+  <rect x="68" y="356" width="170" height="40" rx="10" fill="#1f7a53"/>
+  <text x="104" y="382" font-family="Arial" font-size="18" font-weight="700" fill="#ffffff">Start Now</text>
+
+  <rect x="930" y="220" width="470" height="190" rx="16" fill="#ffffff" stroke="#d9e2e8"/>
+  <text x="956" y="262" font-family="Arial" font-size="18" font-weight="700" fill="#1d2a33">Safety Snapshot</text>
+  <text x="956" y="310" font-family="Arial" font-size="58" font-weight="700" fill="#1f7a53">72</text>
+  <text x="1052" y="310" font-family="Arial" font-size="22" fill="#5a707d">/100</text>
+  <text x="956" y="346" font-family="Arial" font-size="20" fill="#3c5260">+4 this week</text>
+  <text x="956" y="374" font-family="Arial" font-size="16" fill="#6a7f8b">Why: completed 2 security actions</text>
+
+  <text x="40" y="460" font-family="Arial" font-size="24" font-weight="700" fill="#1d2a33">Priority Queue (Most Relevant First)</text>
+
+  <rect x="40" y="484" width="1360" height="118" rx="14" fill="#ffffff" stroke="#d9e2e8"/>
+  <text x="70" y="526" font-family="Arial" font-size="22" font-weight="700" fill="#1d2a33">Phishing Campaign Targeting Local Bank Users</text>
+  <text x="70" y="556" font-family="Arial" font-size="18" fill="#4f6572">Risk: High (affects your location)</text>
+  <rect x="1160" y="510" width="94" height="32" rx="8" fill="#ffe8e8"/><text x="1184" y="531" font-family="Arial" font-size="16" fill="#b00020">HIGH</text>
+  <text x="70" y="582" font-family="Arial" font-size="16" fill="#607682">First step: Do not click links • 1 min</text>
+
+  <rect x="40" y="616" width="1360" height="118" rx="14" fill="#ffffff" stroke="#d9e2e8"/>
+  <text x="70" y="658" font-family="Arial" font-size="22" font-weight="700" fill="#1d2a33">Local Healthcare Data Breach</text>
+  <text x="70" y="688" font-family="Arial" font-size="18" fill="#4f6572">Risk: Medium (service overlap possible)</text>
+  <rect x="1160" y="642" width="124" height="32" rx="8" fill="#fff5e1"/><text x="1178" y="663" font-family="Arial" font-size="16" fill="#8c6100">MEDIUM</text>
+  <text x="70" y="714" font-family="Arial" font-size="16" fill="#607682">First step: Change affected password • 3 min</text>
+
+  <rect x="40" y="748" width="1360" height="118" rx="14" fill="#ffffff" stroke="#d9e2e8"/>
+  <text x="70" y="790" font-family="Arial" font-size="22" font-weight="700" fill="#1d2a33">Package Theft Increase in Your Area</text>
+  <text x="70" y="820" font-family="Arial" font-size="18" fill="#4f6572">Risk: Low (awareness recommended)</text>
+  <rect x="1160" y="774" width="92" height="32" rx="8" fill="#eaf7ea"/><text x="1188" y="795" font-family="Arial" font-size="16" fill="#187a30">LOW</text>
+  <text x="70" y="846" font-family="Arial" font-size="16" fill="#607682">First step: Enable delivery signature • 2 min</text>
+
+  <text x="40" y="926" font-family="Arial" font-size="18" fill="#667d89">Template Mode Notice (if AI unavailable): "Using standard safety steps (AI analysis unavailable)"</text>
+</svg>
