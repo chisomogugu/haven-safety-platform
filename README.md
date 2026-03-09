@@ -1,7 +1,5 @@
 # Haven — AI-Powered Community Safety Platform Design Doc
 
-> Palo Alto Networks Case Study · Built with OpenAI, Flask, React
-
 Haven is a community safety platform where AI is the core product, not a supporting feature. Every interaction — searching for threats, checking a suspicious message, reviewing your safety score, or reading a weekly digest — is an AI-powered experience personalized to the user's location, tech literacy, and services they use.
 
 ---
@@ -187,6 +185,7 @@ pip install -r requirements.txt
 # Create a .env file
 echo "OPENAI_API_KEY=your_key_here" > .env
 
+#Run
 python app.py
 # API running at http://localhost:5000
 ```
@@ -355,29 +354,21 @@ npm test
 
 ## Future Recommendations
 
+
+### Permission-Based Device Safety Scan
+With explicit user consent, Haven could use MCP tools to scan selected apps, device settings, OS update status, app permissions, and Wi-Fi posture. This would allow the AI to provide safety recommendations grounded in the user's actual device configuration rather than self-reported answers alone — making the safety score significantly more accurate.
+
+### Context Memory for Follow-Up Questions
+Haven could retain recent conversation context so follow-up questions feel natural and connected. A user who asks "How do I secure my home network?" and then follows up with "Which Wi-Fi settings should I change?" would receive a coherent, continuous response rather than starting from scratch. This would make the search experience feel more like a conversation with a trusted advisor.
+
+### Live Threat Database Updates
+Continuously refresh threat intelligence from external feeds — breach disclosures, scam bulletins, local incident reports — so users receive current, verified information rather than relying solely on community submissions. Automated ingestion pipelines would keep the threat feed timely without manual curation.
+
+### Proactive Safety Monitoring
+Shift Haven from a reactive search tool to a proactive safety system. Based on the user's profile, location, score weaknesses, and emerging threat patterns, Haven would surface alerts and recommended actions before the user thinks to ask — delivering safety intelligence at the moment it matters most.
+
 ### Push Notifications & Real-Time Alerts
 Implement WebSocket or push notification support so users receive immediate alerts when a critical threat is reported near their location. Browser push notifications and email delivery (using the user's preferred digest frequency) would extend Haven's reach beyond active sessions.
 
 ### Community Threat Verification
 Add an upvote / confirm mechanism on threat reports. Community confirmations increase a threat's credibility score and could trigger automatic severity escalation. A "mark as resolved" voting system would keep the feed accurate without requiring admin moderation.
-
-### Richer Threat Intelligence Sources
-Integrate public data feeds — NOAA weather alerts, local PD RSS feeds, FBI IC3 scam bulletins — to supplement community reports with verified authoritative data. Automatic deduplication would prevent the same event from appearing multiple times.
-
-### Gamification & Streaks
-Introduce streak tracking for daily checkin completions, achievement badges (e.g. "Phishing Detector", "7-Day Streak", "Score Improver"), and an opt-in anonymized leaderboard. These mechanics drive habitual engagement with the safety content.
-
-### Mobile Application
-A React Native app sharing the same Flask backend would extend Haven to mobile users with native push notification support, camera access for on-the-spot scam scanning, and location-based threat alerting in the background.
-
-### Organization & Household Mode
-Allow a group of users (family, small team, neighborhood) to share a threat feed and safety digest. A household admin could view aggregate safety scores and assign protective action tasks to members.
-
-### AI Improvements
-- **Streaming responses** — Stream AI output to the client for perceived speed improvements on slower connections
-- **Multilingual support** — Detect the user's browser language and respond in kind
-- **Proactive score nudges** — When the AI detects a local threat matching a user's weak score areas, surface a targeted recommendation automatically
-- **Personalized feed ranking** — Re-order the threat feed by relevance to the user's profile rather than pure severity
-
-### Admin Dashboard
-A moderation interface for reviewing user-reported threats before they go live, managing synthetic seed data, and monitoring AI fallback rates and error logs. Would include basic analytics: active users by location, most-completed action steps, average score trends.
