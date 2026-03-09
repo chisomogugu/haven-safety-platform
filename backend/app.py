@@ -7,7 +7,6 @@ from database import init_db
 from routes.threats import threats_bp
 from routes.profile import profile_bp
 from routes.ai import ai_bp
-from routes.checkins import checkins_bp
 
 load_dotenv()
 
@@ -18,7 +17,6 @@ CORS(app)
 app.register_blueprint(threats_bp, url_prefix='/api')
 app.register_blueprint(profile_bp, url_prefix='/api')
 app.register_blueprint(ai_bp, url_prefix='/api')
-app.register_blueprint(checkins_bp, url_prefix='/api')
 
 # Always init DB — runs whether started via `flask run` or `python app.py`
 with app.app_context():

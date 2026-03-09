@@ -18,8 +18,6 @@ const VERDICT_ICON = {
   unclear:     <HelpCircle   size={18} className="text-verdict-unclear" />,
 }
 
-const PANEL = 'rounded-2xl border border-haven-border bg-haven-card'
-
 function buildClientSearchFallback(query) {
   return {
     answer: 'AI is temporarily unavailable. Here are practical next steps you can take right now.',
@@ -80,7 +78,7 @@ function SmartSearch({ clientId, onSearchGuidance, onScamResult, onLoading }) {
         setImage(null)
       } else if (intent === 'score' || intent === 'score_check' || routeTo === 'score') {
         onSearchGuidance?.({
-          answer: 'Your score is tracked directly on this page. Complete Daily Safety Scoreboard checklist steps below to raise it.',
+          answer: 'Your score now starts at 0 on each reload and is tracked directly on this page. Complete Daily Safety Scoreboard checklist steps below to increase it.',
           actions: [],
           follow_up: '',
         }, query || 'my safety score')
@@ -279,8 +277,8 @@ function SearchGuidanceResult({ result, query, onDismiss, onChecklistStepComplet
   }
 
   return (
-    <div className={`${PANEL} overflow-hidden animate-fade-in`}>
-      <div className="flex items-start gap-3 px-5 py-4 border-b border-haven-border/70">
+    <div className="rounded-2xl border border-haven-border overflow-hidden animate-fade-in">
+      <div className="flex items-start gap-3 px-5 py-4 bg-haven-card">
         <Lightbulb size={18} className={result?._unknown ? "text-haven-dim mt-0.5" : "text-haven-bright mt-0.5"} />
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm text-haven-text">{result?._unknown ? "Not a safety query" : "Safety Guidance"}</p>
@@ -289,16 +287,16 @@ function SearchGuidanceResult({ result, query, onDismiss, onChecklistStepComplet
         <button onClick={onDismiss} className="text-haven-dim hover:text-haven-sub"><X size={14} /></button>
       </div>
 
-      <div className="px-5 py-4 space-y-3">
+      <div className="px-5 py-4 bg-haven-surface space-y-3">
         {result?.source_note && (
-          <p className="text-[11px] text-haven-dim bg-haven-surface border border-haven-border rounded-lg px-2.5 py-2">
+          <p className="text-[11px] text-haven-dim bg-haven-card border border-haven-border rounded-lg px-2.5 py-2">
             {result.source_note}
           </p>
         )}
         {answer && <p className="text-sm text-haven-sub leading-relaxed">{answer}</p>}
 
         {recommendedActions.length > 0 && (
-          <div className="bg-haven-surface rounded-xl px-3 py-2 border border-haven-border/70">
+          <div className="bg-haven-card rounded-xl px-3 py-2">
             <p className="text-xs uppercase tracking-wider text-haven-dim font-semibold mb-2">Recommended Actions</p>
             <div className="space-y-2">
               {recommendedActions.map((action) => {
@@ -307,7 +305,7 @@ function SearchGuidanceResult({ result, query, onDismiss, onChecklistStepComplet
                 const total = action.steps.length
 
                 return (
-                  <div key={action.id} className="rounded-lg border border-haven-border bg-haven-bg/30">
+                  <div key={action.id} className="rounded-lg border border-haven-border bg-haven-surface/50">
                     <button
                       onClick={() => setOpenActionId(isOpen ? null : action.id)}
                       className="w-full px-3 py-2 flex items-start justify-between gap-3 text-left"
@@ -338,7 +336,7 @@ function SearchGuidanceResult({ result, query, onDismiss, onChecklistStepComplet
                               onClick={() => completeStep(action.id, idx, step.points)}
                               disabled={done}
                               className={`w-full flex items-start gap-2.5 text-left rounded-lg px-2 py-2 transition-all ${
-                                done ? 'opacity-60 bg-green-500/5' : 'hover:bg-haven-surface'
+                                done ? 'opacity-60 bg-green-500/5' : 'hover:bg-haven-card'
                               }`}
                             >
                               <span className="pt-0.5">
@@ -393,7 +391,7 @@ function DailySafetyScoreboard({ cards, loading, completedSteps, onCompleteStep,
 
   if (loading) {
     return (
-      <div className={`${PANEL} p-4`}>
+      <div className="bg-haven-card border border-haven-border rounded-2xl p-4">
         <div className="flex justify-center py-6"><Spinner /></div>
       </div>
     )
@@ -401,20 +399,20 @@ function DailySafetyScoreboard({ cards, loading, completedSteps, onCompleteStep,
 
   if (!cards?.length) {
     return (
-      <div className={`${PANEL} p-4`}>
+      <div className="bg-haven-card border border-haven-border rounded-2xl p-4">
         <p className="text-sm text-haven-sub">No daily check-ins available right now.</p>
       </div>
     )
   }
 
   return (
-    <div className={`${PANEL} p-4 space-y-3`}>
+    <div className="bg-haven-card border border-haven-border rounded-2xl p-4 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Target size={16} className="text-haven-primary" />
           <div>
             <p className="text-sm font-semibold text-haven-text">Daily Safety Scoreboard</p>
-            <p className="text-[11px] text-haven-dim">Complete steps to raise your score today</p>
+            <p className="text-[11px] text-haven-dim">Resets on reload (MVP)</p>
           </div>
         </div>
         <div className="text-right">
@@ -465,7 +463,7 @@ function DailySafetyScoreboard({ cards, loading, completedSteps, onCompleteStep,
                         onClick={() => onCompleteStep(card.id, idx, Number(step.score_points || 0))}
                         disabled={done}
                         className={`w-full flex items-start gap-2.5 px-2 py-2 rounded-lg text-left transition-all ${
-                          done ? 'opacity-60 bg-green-500/5' : 'hover:bg-haven-surface'
+                          done ? 'opacity-60 bg-green-500/5' : 'hover:bg-haven-card'
                         }`}
                       >
                         <span className="pt-0.5">
@@ -493,14 +491,14 @@ function DailySafetyScoreboard({ cards, loading, completedSteps, onCompleteStep,
 // ─── Score Widget for Home ────────────────────────────────────────────────────
 function ScoreWidget({ score }) {
   return (
-    <div className={`${PANEL} w-full px-5 py-4 flex items-center gap-4`}>
-      <ScoreRing score={score?.score ?? 0} size={58} label="" />
+    <div className="w-full bg-haven-card border border-haven-border rounded-2xl px-5 py-4 flex items-center gap-4">
+      <ScoreRing score={score?.score ?? 0} size={64} label="" />
       <div className="flex-1 text-left">
-        <p className="text-xs text-haven-dim uppercase tracking-wider mb-1">Today&apos;s Score</p>
+        <p className="text-xs text-haven-dim uppercase tracking-wider mb-1">Safety Score</p>
         <p className={`text-2xl font-bold ${getScoreColor(score?.score ?? 0)}`}>
           {score?.score ?? 0}<span className="text-haven-dim text-sm font-normal">/100</span>
         </p>
-        <p className="text-xs text-haven-sub mt-0.5">Earn points by completing checklist actions</p>
+        <p className="text-xs text-haven-sub mt-0.5">Grows from checklist completion on this page</p>
       </div>
     </div>
   )
@@ -649,40 +647,36 @@ export default function Home({ clientId, profile, score, onScoreUpdate }) {
         />
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4 items-start">
-        <ScoreWidget score={liveScore} />
-        <DailySafetyScoreboard
-          cards={dailyCards}
-          loading={dailyLoading}
-          completedSteps={dailyCompletedSteps}
-          onCompleteStep={completeDailyStep}
-          dailyGoal={dailyGoal}
-          maxPoints={dailyMaxPoints}
-        />
-      </div>
-
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-sm font-semibold text-haven-text">Threat Feed</h2>
-            {profile?.location && (
-              <p className="text-xs text-haven-dim mt-0.5">
-                Showing threats near <span className="text-haven-sub">{profile.location}</span>
-              </p>
-            )}
-          </div>
-          <button onClick={() => setReporting(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-haven-surface border border-haven-border hover:border-haven-primary/50 text-haven-sub hover:text-haven-bright text-sm rounded-xl transition-all whitespace-nowrap">
-            <Plus size={14} /> Report
-          </button>
-        </div>
-
+      {/* Score + Filters row */}
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 items-start">
         <FilterPills
           type={typeFilter} severity={sevFilter}
           onType={setType}
           onSeverity={setSev}
         />
+        <button onClick={() => setReporting(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-haven-surface border border-haven-border hover:border-haven-primary/50 text-haven-sub hover:text-haven-bright text-sm rounded-xl transition-all whitespace-nowrap">
+          <Plus size={14} /> Report
+        </button>
       </div>
+
+      {/* Score widget */}
+      <ScoreWidget score={liveScore} />
+
+      <DailySafetyScoreboard
+        cards={dailyCards}
+        loading={dailyLoading}
+        completedSteps={dailyCompletedSteps}
+        onCompleteStep={completeDailyStep}
+        dailyGoal={dailyGoal}
+        maxPoints={dailyMaxPoints}
+      />
+
+      {profile?.location && (
+        <p className="text-xs text-haven-dim">
+          Showing threats near <span className="text-haven-sub">{profile.location}</span>
+        </p>
+      )}
 
       {/* Threat feed */}
       {loading || aiLoading ? (
