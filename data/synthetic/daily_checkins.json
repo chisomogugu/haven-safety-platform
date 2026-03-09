@@ -1,0 +1,381 @@
+[
+  {
+    "id": "chk-001",
+    "title": "Enable MFA on your primary email",
+    "description": "Protect your main email account first. It is the recovery path for most other accounts.",
+    "category": "digital_hygiene",
+    "points": 12,
+    "difficulty": "medium",
+    "time_estimate": "8 min",
+    "tags": ["mfa", "email", "account_security"],
+    "conditions": {
+      "tech_literacy": ["beginner", "intermediate", "advanced"],
+      "services_any": ["gmail", "outlook", "yahoo", "icloud"]
+    },
+    "steps": [
+      {
+        "step": "Open your email account security settings",
+        "time_estimate": "2 min",
+        "tooltip": "Look for Security, Sign-in, or Account settings",
+        "score_points": 3
+      },
+      {
+        "step": "Turn on multi-factor authentication",
+        "time_estimate": "3 min",
+        "tooltip": "Use an authenticator app when available",
+        "score_points": 6
+      },
+      {
+        "step": "Save recovery codes in a safe place",
+        "time_estimate": "3 min",
+        "tooltip": "Needed if you lose your phone",
+        "score_points": 3
+      }
+    ]
+  },
+  {
+    "id": "chk-002",
+    "title": "Replace one reused password",
+    "description": "Reduce credential-stuffing risk by making at least one critical account password unique today.",
+    "category": "digital_hygiene",
+    "points": 8,
+    "difficulty": "easy",
+    "time_estimate": "6 min",
+    "tags": ["passwords", "credential_stuffing"],
+    "conditions": {
+      "tech_literacy": ["beginner", "intermediate", "advanced"]
+    },
+    "steps": [
+      {
+        "step": "Pick one high-value account (email, banking, cloud storage)",
+        "time_estimate": "1 min",
+        "tooltip": "Start with the account you use for password resets",
+        "score_points": 2
+      },
+      {
+        "step": "Set a new unique password for that account",
+        "time_estimate": "3 min",
+        "tooltip": "Use 14+ characters if possible",
+        "score_points": 4
+      },
+      {
+        "step": "Store it in a password manager or secure record",
+        "time_estimate": "2 min",
+        "tooltip": "Avoid writing passwords in plain text notes",
+        "score_points": 2
+      }
+    ]
+  },
+  {
+    "id": "chk-003",
+    "title": "Review unknown sign-ins",
+    "description": "Check recent account activity to catch unauthorized access early.",
+    "category": "digital_hygiene",
+    "points": 7,
+    "difficulty": "easy",
+    "time_estimate": "5 min",
+    "tags": ["account_activity", "intrusion_detection"],
+    "conditions": {
+      "tech_literacy": ["beginner", "intermediate", "advanced"]
+    },
+    "steps": [
+      {
+        "step": "Open sign-in history for email or social account",
+        "time_estimate": "2 min",
+        "tooltip": "Most services show device, location, and time",
+        "score_points": 2
+      },
+      {
+        "step": "Sign out unknown sessions and mark suspicious activity",
+        "time_estimate": "2 min",
+        "tooltip": "Force logout of unfamiliar devices",
+        "score_points": 3
+      },
+      {
+        "step": "Enable sign-in alerts",
+        "time_estimate": "1 min",
+        "tooltip": "Get immediate notifications for new device logins",
+        "score_points": 2
+      }
+    ]
+  },
+  {
+    "id": "chk-004",
+    "title": "Update phone and laptop OS",
+    "description": "Security patches close known vulnerabilities used in common attacks.",
+    "category": "digital_hygiene",
+    "points": 9,
+    "difficulty": "easy",
+    "time_estimate": "10 min",
+    "tags": ["updates", "patching", "devices"],
+    "conditions": {
+      "tech_literacy": ["beginner", "intermediate", "advanced"]
+    },
+    "steps": [
+      {
+        "step": "Check for system updates on your phone",
+        "time_estimate": "3 min",
+        "tooltip": "Install available security updates",
+        "score_points": 4
+      },
+      {
+        "step": "Check for updates on your primary computer",
+        "time_estimate": "4 min",
+        "tooltip": "Restart if needed to finish patching",
+        "score_points": 4
+      },
+      {
+        "step": "Enable automatic security updates",
+        "time_estimate": "3 min",
+        "tooltip": "Keeps protection current with less effort",
+        "score_points": 1
+      }
+    ]
+  },
+  {
+    "id": "chk-005",
+    "title": "Harden home Wi-Fi router",
+    "description": "Router defaults are a common weak point in home network security.",
+    "category": "digital_hygiene",
+    "points": 10,
+    "difficulty": "medium",
+    "time_estimate": "12 min",
+    "tags": ["wifi", "router", "home_network"],
+    "conditions": {
+      "tech_literacy": ["intermediate", "advanced"]
+    },
+    "steps": [
+      {
+        "step": "Change router admin password from default",
+        "time_estimate": "4 min",
+        "tooltip": "Use a unique passphrase",
+        "score_points": 4
+      },
+      {
+        "step": "Set Wi-Fi security to WPA2 or WPA3",
+        "time_estimate": "4 min",
+        "tooltip": "Avoid open and legacy encryption modes",
+        "score_points": 4
+      },
+      {
+        "step": "Disable WPS and remove unknown devices",
+        "time_estimate": "4 min",
+        "tooltip": "Reduces unauthorized access paths",
+        "score_points": 2
+      }
+    ]
+  },
+  {
+    "id": "chk-006",
+    "title": "Practice phishing pause",
+    "description": "Build anti-phishing habit by using a quick verification checklist before you click.",
+    "category": "digital_hygiene",
+    "points": 6,
+    "difficulty": "easy",
+    "time_estimate": "4 min",
+    "tags": ["phishing", "behavior", "verification"],
+    "conditions": {
+      "tech_literacy": ["beginner", "intermediate", "advanced"]
+    },
+    "steps": [
+      {
+        "step": "Inspect sender address and link destination",
+        "time_estimate": "2 min",
+        "tooltip": "Look for misspellings and odd domains",
+        "score_points": 2
+      },
+      {
+        "step": "Verify urgent requests through an official channel",
+        "time_estimate": "1 min",
+        "tooltip": "Call the known number, not one from the message",
+        "score_points": 2
+      },
+      {
+        "step": "Report one suspicious message as phishing",
+        "time_estimate": "1 min",
+        "tooltip": "Improves platform-level detection",
+        "score_points": 2
+      }
+    ]
+  },
+  {
+    "id": "chk-007",
+    "title": "Set delivery theft protections",
+    "description": "Reduce package theft risk with delivery controls and safer drop-off settings.",
+    "category": "local_awareness",
+    "points": 7,
+    "difficulty": "easy",
+    "time_estimate": "6 min",
+    "tags": ["package_theft", "home_safety", "local_crime"],
+    "conditions": {
+      "location_type": ["urban", "suburban"]
+    },
+    "steps": [
+      {
+        "step": "Enable delivery tracking alerts",
+        "time_estimate": "2 min",
+        "tooltip": "Use carrier app notifications",
+        "score_points": 2
+      },
+      {
+        "step": "Set signature-required or hold-for-pickup for expensive items",
+        "time_estimate": "2 min",
+        "tooltip": "Prevents unattended deliveries",
+        "score_points": 3
+      },
+      {
+        "step": "Add specific safe drop-off instructions",
+        "time_estimate": "2 min",
+        "tooltip": "Use side door, lockbox, or concierge when possible",
+        "score_points": 2
+      }
+    ]
+  },
+  {
+    "id": "chk-008",
+    "title": "Review one local safety alert",
+    "description": "Spend a few minutes on one verified local alert so your actions are based on current conditions.",
+    "category": "local_awareness",
+    "points": 5,
+    "difficulty": "easy",
+    "time_estimate": "4 min",
+    "tags": ["local_alerts", "awareness"],
+    "conditions": {},
+    "steps": [
+      {
+        "step": "Open one verified local alert in Haven",
+        "time_estimate": "2 min",
+        "tooltip": "Prefer official sources and monitored community reports",
+        "score_points": 2
+      },
+      {
+        "step": "Apply one recommended step from that alert",
+        "time_estimate": "2 min",
+        "tooltip": "Small actions reduce paralysis and improve readiness",
+        "score_points": 3
+      }
+    ]
+  },
+  {
+    "id": "chk-009",
+    "title": "Emergency contact readiness",
+    "description": "Confirm contacts and emergency settings in case of local incidents.",
+    "category": "local_awareness",
+    "points": 8,
+    "difficulty": "easy",
+    "time_estimate": "7 min",
+    "tags": ["emergency_prep", "contacts", "readiness"],
+    "conditions": {},
+    "steps": [
+      {
+        "step": "Verify emergency contacts on your phone",
+        "time_estimate": "3 min",
+        "tooltip": "Include one nearby trusted person",
+        "score_points": 3
+      },
+      {
+        "step": "Enable local emergency alerts on your device",
+        "time_estimate": "2 min",
+        "tooltip": "Allow severe weather and public safety alerts",
+        "score_points": 3
+      },
+      {
+        "step": "Save local non-emergency police or city hotline",
+        "time_estimate": "2 min",
+        "tooltip": "Use non-emergency channels for non-urgent reports",
+        "score_points": 2
+      }
+    ]
+  },
+  {
+    "id": "chk-010",
+    "title": "Vehicle break-in prevention",
+    "description": "Apply quick habits that reduce break-in risk when parking in public areas.",
+    "category": "local_awareness",
+    "points": 6,
+    "difficulty": "easy",
+    "time_estimate": "5 min",
+    "tags": ["vehicle_security", "crime_prevention"],
+    "conditions": {
+      "location_type": ["urban", "suburban", "rural"]
+    },
+    "steps": [
+      {
+        "step": "Remove visible valuables from the car",
+        "time_estimate": "2 min",
+        "tooltip": "Do this before arrival when possible",
+        "score_points": 3
+      },
+      {
+        "step": "Choose a well-lit parking spot",
+        "time_estimate": "1 min",
+        "tooltip": "Near entrances or active foot traffic is better",
+        "score_points": 1
+      },
+      {
+        "step": "Lock doors and verify windows are closed",
+        "time_estimate": "2 min",
+        "tooltip": "Quick final check lowers opportunistic theft risk",
+        "score_points": 2
+      }
+    ]
+  },
+  {
+    "id": "chk-011",
+    "title": "Weather prep quick check",
+    "description": "Complete a rapid readiness check when severe weather conditions are possible.",
+    "category": "local_awareness",
+    "points": 9,
+    "difficulty": "medium",
+    "time_estimate": "10 min",
+    "tags": ["weather", "preparedness", "household_safety"],
+    "conditions": {
+      "seasonal": ["storm", "heat", "winter"]
+    },
+    "steps": [
+      {
+        "step": "Charge phone and backup battery",
+        "time_estimate": "3 min",
+        "tooltip": "Power outages are common during severe events",
+        "score_points": 3
+      },
+      {
+        "step": "Identify your safest room or shelter location",
+        "time_estimate": "3 min",
+        "tooltip": "Lowest interior room for tornado, high ground for flood",
+        "score_points": 3
+      },
+      {
+        "step": "Bring in loose outdoor items",
+        "time_estimate": "4 min",
+        "tooltip": "Prevents avoidable property damage",
+        "score_points": 3
+      }
+    ]
+  },
+  {
+    "id": "chk-012",
+    "title": "Community verification habit",
+    "description": "Separate verified information from rumors before sharing safety-related posts.",
+    "category": "local_awareness",
+    "points": 5,
+    "difficulty": "easy",
+    "time_estimate": "4 min",
+    "tags": ["misinformation", "community_safety", "verification"],
+    "conditions": {},
+    "steps": [
+      {
+        "step": "Confirm one safety claim against an official source",
+        "time_estimate": "2 min",
+        "tooltip": "City, county, emergency services, or major utility sources",
+        "score_points": 3
+      },
+      {
+        "step": "Share only verified update or choose not to forward",
+        "time_estimate": "2 min",
+        "tooltip": "Reduces panic and false alarms",
+        "score_points": 2
+      }
+    ]
+  }
+]

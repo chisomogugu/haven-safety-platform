@@ -6,30 +6,30 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background-color: #12101f;
-  color: #ede9fe;
+  background-color: #0b1622;
+  color: #ecf5fb;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: #13102a; }
-::-webkit-scrollbar-thumb { background: #3d3460; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #8b5cf6; }
+::-webkit-scrollbar-track { background: #0c1a2a; }
+::-webkit-scrollbar-thumb { background: #325470; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #2f7f9f; }
 
-input[type="checkbox"] { accent-color: #8b5cf6; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
-*:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; border-radius: 4px; }
+input[type="checkbox"] { accent-color: #2f7f9f; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
+*:focus-visible { outline: 2px solid #2f7f9f; outline-offset: 2px; border-radius: 4px; }
 
 .haven-glow-bg {
-  background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(139,92,246,0.12) 0%, transparent 70%);
+  background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(47,127,159,0.15) 0%, transparent 70%);
 }
 
 .card-border {
-  border: 1px solid #2a2245;
+  border: 1px solid #21384f;
   transition: border-color 0.2s;
 }
-.card-border:hover { border-color: rgba(139,92,246,0.4); }
+.card-border:hover { border-color: rgba(47,127,159,0.4); }
 
 .severity-bar-critical { background: #ef4444; }
 .severity-bar-high     { background: #f97316; }
